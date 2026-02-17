@@ -52,7 +52,7 @@ fi
 
 # Start the application
 echo "Starting FastAPI application..."
-uv run uvicorn app.main:app --host $HOST --port $PORT --reload --log-config=$LOG_CONFIG
+uv run uvicorn app.entrypoints.fastapi:app --host $HOST --port $PORT --reload --log-config=$LOG_CONFIG
 
 # Cleanup function
 cleanup() {
