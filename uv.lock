@@ -168,7 +168,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cdp-python-backend-template"
+name = "ai-uc-content-swarm-runtime"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

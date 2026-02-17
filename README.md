@@ -1,8 +1,8 @@
-# cdp-python-backend-template
+# ai-uc-content-swarm-runtime
 
 This is work-in-progress. See [To Do List](./TODO.md)
 
-- [cdp-python-backend-template](#cdp-python-backend-template)
+- [ai-uc-content-swarm-runtime](#ai-uc-content-swarm-runtime)
   - [Requirements](#requirements)
     - [Python](#python)
     - [Linting and Formatting](#linting-and-formatting)
