@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.common.http_client import create_async_client
 from app.common.mongo import get_db
-from app.main import app
+from app.entrypoints.fastapi import app
 
 client = TestClient(app)
 

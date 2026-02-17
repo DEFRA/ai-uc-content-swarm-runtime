@@ -187,7 +187,7 @@ Testing follows the [FastApi documented approach](https://fastapi.tiangolo.com/t
 To test the application run:
 
 ```bash
-uv run pytest
+uv run python -m pytest
 ```
 
 ## API endpoints
