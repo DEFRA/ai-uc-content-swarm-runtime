@@ -3,6 +3,59 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
+name = "ai-uc-content-swarm-runtime"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "asgi-logger" },
+    { name = "aws-embedded-metrics" },
+    { name = "dnspython" },
+    { name = "ecs-logging" },
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pydantic-settings" },
+    { name = "pymongo", extra = ["aws", "encryption", "snappy", "zstd"] },
+    { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "httpx" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+    { name = "ruff" },
+    { name = "taskipy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "asgi-logger", specifier = "==0.1.0" },
+    { name = "aws-embedded-metrics", specifier = "==3.3.0" },
+    { name = "dnspython", specifier = "==2.7.0" },
+    { name = "ecs-logging", specifier = "==2.2.0" },
+    { name = "fastapi", specifier = "==0.115.12" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "pydantic-settings", specifier = "==2.9.1" },
+    { name = "pymongo", extras = ["aws", "encryption", "snappy", "zstd"], specifier = "==4.13.1" },
+    { name = "uvicorn", specifier = "==0.34.3" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "pre-commit", specifier = "==4.2.0" },
+    { name = "pytest", specifier = "==8.4.0" },
+    { name = "pytest-asyncio", specifier = "==1.0.0" },
+    { name = "pytest-cov", specifier = "==6.2.1" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "ruff", specifier = "==0.11.13" },
+    { name = "taskipy", specifier = "==1.14.1" },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -165,59 +218,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/cd/2e/763918cd2b5af0345a38181bc5f16d1f6c32aad2a03b7738274cf068d864/botocore-1.38.35.tar.gz", hash = "sha256:3c7032948e066eed5f91d64cd51ee9664d1db9beaf3279ac27da608176bb3d54", size = 13962912, upload-time = "2025-06-11T19:29:45.29Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/97/89/b993928d3d4385b3698fd7a1fb251c117c76bc6cf8d5f3a587067f1298e3/botocore-1.38.35-py3-none-any.whl", hash = "sha256:bbfae3f13a5d75ad73bf71b5ba5ff3ccd055d947d63593e8a0e84acc95a8bfa4", size = 13623012, upload-time = "2025-06-11T19:29:40.142Z" },
-]
-
-[[package]]
-name = "ai-uc-content-swarm-runtime"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "asgi-logger" },
-    { name = "aws-embedded-metrics" },
-    { name = "dnspython" },
-    { name = "ecs-logging" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pydantic-settings" },
-    { name = "pymongo", extra = ["aws", "encryption", "snappy", "zstd"] },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "httpx" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-    { name = "ruff" },
-    { name = "taskipy" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "asgi-logger", specifier = "==0.1.0" },
-    { name = "aws-embedded-metrics", specifier = "==3.3.0" },
-    { name = "dnspython", specifier = "==2.7.0" },
-    { name = "ecs-logging", specifier = "==2.2.0" },
-    { name = "fastapi", specifier = "==0.115.12" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "pydantic-settings", specifier = "==2.9.1" },
-    { name = "pymongo", extras = ["aws", "encryption", "snappy", "zstd"], specifier = "==4.13.1" },
-    { name = "uvicorn", specifier = "==0.34.3" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "pre-commit", specifier = "==4.2.0" },
-    { name = "pytest", specifier = "==8.4.0" },
-    { name = "pytest-asyncio", specifier = "==1.0.0" },
-    { name = "pytest-cov", specifier = "==6.2.1" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
-    { name = "ruff", specifier = "==0.11.13" },
-    { name = "taskipy", specifier = "==1.14.1" },
 ]
 
 [[package]]
