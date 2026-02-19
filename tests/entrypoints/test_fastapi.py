@@ -1,11 +1,12 @@
 from fastapi.testclient import TestClient
+from pytest_mock import MockerFixture
 
 from app.entrypoints.fastapi import app
 
 client = TestClient(app)
 
 
-def test_lifespan(mocker):
+def test_lifespan(mocker: MockerFixture) -> None:
     mock_mongo_client = mocker.AsyncMock()
     mock_get_mongo = mocker.patch(
         "app.entrypoints.fastapi.get_mongo_client", return_value=mock_mongo_client
@@ -18,12 +19,12 @@ def test_lifespan(mocker):
     mock_mongo_client.close.assert_awaited_once()  # Shutdown: close called
 
 
-def test_health():
+def test_health() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_root():
+def test_root() -> None:
     response = client.get("/")
     assert response.status_code == 404
