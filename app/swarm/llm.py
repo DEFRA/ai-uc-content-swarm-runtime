@@ -6,12 +6,6 @@ from app import config
 
 settings: config.AppConfig = config.get_config()
 
-bedrock_runtime = boto3.client(
-    "bedrock-runtime",
-    region_name=settings.aws.region_name,
-    aws_account_id=settings.aws.account_id,
-)
-
 
 def _setup_model_settings(
     guardrails: config.BedrockGuardrailConfig,
@@ -23,16 +17,15 @@ def _setup_model_settings(
         return None
 
     return bedrock_models.BedrockModelSettings(
-        guardrails=[
-            bedrock_models.BedrockGuardrail(
-                id=guardrails.id,
-                version=guardrails.version,
-            )
-        ]
+        bedrock_guardrail_config={
+            "guardrailIdentifier": guardrails.id,
+            "guardrailVersion": guardrails.version,
+            "trace": "enabled",
+        }
     )
 
 
-provider = bedrock_providers.BedrockProvider(bedrock_client=bedrock_runtime)
+provider = bedrock_providers.BedrockProvider()
 
 haiku_config = settings.bedrock.claude_haiku
 sonnet_config = settings.bedrock.claude_sonnet
