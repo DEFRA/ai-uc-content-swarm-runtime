@@ -1,4 +1,3 @@
-import boto3
 from pydantic_ai.models import bedrock as bedrock_models
 from pydantic_ai.providers import bedrock as bedrock_providers
 
