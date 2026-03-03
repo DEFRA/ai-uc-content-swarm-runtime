@@ -5,7 +5,9 @@ from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.common.tls import custom_ca_certs
-from app.config import config
+from app.config import get_config
+
+config = get_config()
 
 logger = getLogger(__name__)
 

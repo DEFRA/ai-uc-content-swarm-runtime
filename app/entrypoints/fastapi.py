@@ -7,9 +7,12 @@ from fastapi import FastAPI
 
 from app.common.mongo import get_mongo_client
 from app.common.tracing import TraceIdMiddleware
-from app.config import config
-from app.example.router import router as example_router
+from app.config import get_config
 from app.health.router import router as health_router
+from app.swarm.router import router as swarm_router
+
+config = get_config()
+
 
 logger = getLogger(__name__)
 
@@ -33,7 +36,7 @@ app.add_middleware(TraceIdMiddleware)
 
 # Setup Routes
 app.include_router(health_router)
-app.include_router(example_router)
+app.include_router(swarm_router)
 
 
 def main() -> None:  # pragma: no cover

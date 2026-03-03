@@ -5,7 +5,7 @@ services:
       - "4566:4566" # LocalStack Gateway
       - "4510-4559:4510-4559" # external services port range
     env_file:
-      - "compose/aws.env"
+      - ".env"
     environment:
       DEBUG: ${DEBUG:-1}
       LS_LOG: WARN # Localstack DEBUG Level
@@ -49,34 +49,16 @@ services:
     profiles:
       - service
     env_file:
-      - "compose/aws.env"
-      - "compose/secrets.env"
+      - ".env"
     environment:
       PORT: ${PORT:-8085}
-      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL:-http://localstack:4566}
+      LOCALSTACK_ENDPOINT_URL: ${LOCALSTACK_ENDPOINT_URL:-http://localstack:4566}
       MONGO_URI: ${MONGO_URI:-mongodb://mongodb:27017/}
       HOST: ${HOST:-0.0.0.0}
+    volumes:
+      - ./app:/home/nonroot/app
     develop:
       watch:
-        - action: sync
-          path: ./app
-          target: /home/nonroot/app
-          ignore:
-            - README.md
-            - "**/*.md"
-            - "**/test_*.py"
-            - tests/**/*
-            - .git/**/*
-            - .venv/**/*
-            - .pytest_cache/**/*
-            - .ruff_cache/**/*
-            - .vscode/**/*
-            - .github/**/*
-            - requirements-dev.txt
-            - pytest.ini
-            - .pre-commit-config.yaml
-            - sonar-project.properties
-            - LICENCE
         - action: rebuild
           path: ./pyproject.toml
           target: /home/nonroot/pyproject.toml
