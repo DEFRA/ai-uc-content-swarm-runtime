@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, Type
 
 import pydantic
 import pydantic_settings
@@ -26,24 +26,19 @@ class BedrockModelConfig(pydantic.BaseModel):
 
 class BedrockConfig(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict()
-    claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
-        pydantic.Field(
-            ...,
-            alias="CLAUDE_HAIKU_MODEL_CONFIG",
-        )
+    claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = pydantic.Field(
+        ..., validation_alias="CLAUDE_HAIKU_MODEL_CONFIG"
     )
-    claude_sonnet: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
-        pydantic.Field(
-            ...,
-            alias="CLAUDE_SONNET_MODEL_CONFIG",
-        )
+    claude_sonnet: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = pydantic.Field(
+        ..., validation_alias="CLAUDE_SONNET_MODEL_CONFIG"
     )
 
     @pydantic.field_validator("claude_haiku", "claude_sonnet", mode="before")
     @classmethod
-    def _parse_bedrock_model_config(cls, v):
+    def _parse_bedrock_model_config(
+        cls: Type["BedrockConfig"], v: str) -> BedrockModelConfig:
         if not isinstance(v, str):
-            return v
+            raise ValueError("Bedrock model config must be a string")
 
         s = v.strip()
 
@@ -86,7 +81,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     enable_metrics: bool = False
     tracing_header: str = "x-cdp-request-id"
 
-    bedrock: BedrockConfig = BedrockConfig()
+    bedrock: BedrockConfig = BedrockConfig()  # type: ignore
 
 
 config: AppConfig | None = None

@@ -3,51 +3,36 @@ from pydantic_ai.providers import bedrock as bedrock_providers
 
 from app import config
 
-settings: config.AppConfig = config.get_config()
+settings = config.get_config()
+provider = bedrock_providers.BedrockProvider()
 
 
-def _setup_model_settings(
-    guardrails: config.BedrockGuardrailConfig,
-) -> bedrock_models.BedrockModelSettings | None:
-    if guardrails is None:
-        return None
-
-    if guardrails.id is None or guardrails.version is None:
-        return None
-
-    return bedrock_models.BedrockModelSettings(
-        bedrock_guardrail_config={
-            "guardrailIdentifier": guardrails.id,
-            "guardrailVersion": guardrails.version,
-            "trace": "enabled",
-        }
+def _setup_model(model_config: config.BedrockModelConfig) -> bedrock_models.BedrockConverseModel:
+    """Create a BedrockConverseModel from configuration."""
+    settings: bedrock_models.BedrockModelSettings | None = None
+    guardrails = model_config.guardrails
+    
+    if guardrails:
+        settings = bedrock_models.BedrockModelSettings(
+            bedrock_guardrail_config={
+                "guardrailIdentifier": guardrails.id,
+                "guardrailVersion": guardrails.version,
+                "trace": "enabled",
+            }
+        )
+    
+    return bedrock_models.BedrockConverseModel(
+        model_config.inference_profile,
+        provider=provider,
+        profile=provider.model_profile(model_config.model_id),
+        settings=settings,
     )
 
 
-provider = bedrock_providers.BedrockProvider()
-
-haiku_config = settings.bedrock.claude_haiku
-sonnet_config = settings.bedrock.claude_sonnet
-
-claude_haiku_settings: bedrock_models.BedrockModelSettings | None = (
-    _setup_model_settings(haiku_config.guardrails)
-)
-claude_sonnet_settings: bedrock_models.BedrockModelSettings | None = (
-    _setup_model_settings(sonnet_config.guardrails)
+claude_haiku = _setup_model(
+    settings.bedrock.claude_haiku
 )
 
-claude_haiku = bedrock_models.BedrockConverseModel(
-    settings.bedrock.claude_haiku.inference_profile,
-    provider=provider,
-    profile=provider.model_profile(settings.bedrock.claude_haiku.model_id),
-    settings=claude_haiku_settings,
-)
-
-print(claude_haiku.model_name)
-
-claude_sonnet = bedrock_models.BedrockConverseModel(
-    settings.bedrock.claude_sonnet.inference_profile,
-    provider=provider,
-    profile=provider.model_profile(settings.bedrock.claude_sonnet.model_id),
-    settings=claude_sonnet_settings,
+claude_sonnet = _setup_model(
+    settings.bedrock.claude_sonnet
 )
