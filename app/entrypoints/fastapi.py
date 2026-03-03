@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from logging import getLogger
@@ -5,13 +6,13 @@ from logging import getLogger
 import uvicorn
 from fastapi import FastAPI
 
-from app.common.mongo import get_mongo_client
-from app.common.tracing import TraceIdMiddleware
-from app.config import get_config
-from app.health.router import router as health_router
-from app.swarm.router import router as swarm_router
+import app.common.mongo as mongo
+import app.common.tracing as tracing
+import app.config as app_config
+import app.health.router as health_router
+import app.swarm.router as swarm_router
 
-config = get_config()
+config = app_config.get_config()
 
 
 logger = getLogger(__name__)
@@ -20,7 +21,7 @@ logger = getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     # Startup
-    client = await get_mongo_client()
+    client = await mongo.get_mongo_client()
     logger.info("MongoDB client connected")
     yield
     # Shutdown
@@ -31,15 +32,16 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(lifespan=lifespan)
 
-# Setup middleware
-app.add_middleware(TraceIdMiddleware)
+app.add_middleware(tracing.TraceIdMiddleware)
 
-# Setup Routes
-app.include_router(health_router)
-app.include_router(swarm_router)
+app.include_router(health_router.router)
+app.include_router(swarm_router.router)
 
 
 def main() -> None:  # pragma: no cover
+    os.environ["HTTP_PROXY"] = str(config.http_proxy)
+    os.environ["HTTPS_PROXY"] = str(config.http_proxy)
+
     uvicorn.run(
         "app.entrypoints.fastapi:app",
         host=config.host,

@@ -6,9 +6,9 @@ from typing import Any
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.config import get_config
+import app.config as app_config
 
-config = get_config()
+config = app_config.get_config()
 
 logger = getLogger(__name__)
 

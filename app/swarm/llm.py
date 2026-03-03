@@ -7,11 +7,13 @@ settings = config.get_config()
 provider = bedrock_providers.BedrockProvider()
 
 
-def _setup_model(model_config: config.BedrockModelConfig) -> bedrock_models.BedrockConverseModel:
+def _setup_model(
+    model_config: config.BedrockModelConfig,
+) -> bedrock_models.BedrockConverseModel:
     """Create a BedrockConverseModel from configuration."""
     settings: bedrock_models.BedrockModelSettings | None = None
     guardrails = model_config.guardrails
-    
+
     if guardrails:
         settings = bedrock_models.BedrockModelSettings(
             bedrock_guardrail_config={
@@ -20,7 +22,7 @@ def _setup_model(model_config: config.BedrockModelConfig) -> bedrock_models.Bedr
                 "trace": "enabled",
             }
         )
-    
+
     return bedrock_models.BedrockConverseModel(
         model_config.inference_profile,
         provider=provider,
@@ -29,10 +31,6 @@ def _setup_model(model_config: config.BedrockModelConfig) -> bedrock_models.Bedr
     )
 
 
-claude_haiku = _setup_model(
-    settings.bedrock.claude_haiku
-)
+claude_haiku = _setup_model(settings.bedrock.claude_haiku)
 
-claude_sonnet = _setup_model(
-    settings.bedrock.claude_sonnet
-)
+claude_sonnet = _setup_model(settings.bedrock.claude_sonnet)

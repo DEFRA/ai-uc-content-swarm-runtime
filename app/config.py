@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated, Type
+from typing import Annotated
 
 import pydantic
 import pydantic_settings
@@ -26,19 +26,21 @@ class BedrockModelConfig(pydantic.BaseModel):
 
 class BedrockConfig(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict()
-    claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = pydantic.Field(
-        ..., validation_alias="CLAUDE_HAIKU_MODEL_CONFIG"
+    claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
+        pydantic.Field(..., validation_alias="CLAUDE_HAIKU_MODEL_CONFIG")
     )
-    claude_sonnet: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = pydantic.Field(
-        ..., validation_alias="CLAUDE_SONNET_MODEL_CONFIG"
+    claude_sonnet: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
+        pydantic.Field(..., validation_alias="CLAUDE_SONNET_MODEL_CONFIG")
     )
 
     @pydantic.field_validator("claude_haiku", "claude_sonnet", mode="before")
     @classmethod
     def _parse_bedrock_model_config(
-        cls: Type["BedrockConfig"], v: str) -> BedrockModelConfig:
+        cls: type["BedrockConfig"], v: str
+    ) -> BedrockModelConfig:
         if not isinstance(v, str):
-            raise ValueError("Bedrock model config must be a string")
+            msg = "Bedrock model config must be a string in the format 'model_id,inference_profile[,guardrail_id:guardrail_version]'"
+            raise ValueError(msg)
 
         s = v.strip()
 
