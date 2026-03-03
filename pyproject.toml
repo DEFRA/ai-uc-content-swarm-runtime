@@ -3,7 +3,7 @@ name = "ai-uc-content-swarm-runtime"
 version = "0.1.0"
 description = "ai-uc-content-swarm-runtime"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "asgi-logger==0.1.0",
     "aws-embedded-metrics==3.3.0",
@@ -20,7 +20,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "debugpy>=1.8.20",
+    "debugpy==1.8.20",
     "httpx==0.28.1",
     "mypy==1.13.0",
     "pytest==8.4.0",
