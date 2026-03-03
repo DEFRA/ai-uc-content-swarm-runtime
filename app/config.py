@@ -25,7 +25,7 @@ class BedrockModelConfig(pydantic.BaseModel):
 
 
 class BedrockConfig(pydantic_settings.BaseSettings):
-    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = pydantic_settings.SettingsConfigDict()
     claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
         pydantic.Field(
             ...,
@@ -72,6 +72,12 @@ class BedrockConfig(pydantic_settings.BaseSettings):
             raise ValueError(msg) from e
 
 
+class AwsConfig(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict()
+    region_name: str = pydantic.Field(..., alias="AWS_REGION")
+    account_id: str = pydantic.Field(..., alias="AWS_ACCOUNT_ID")
+
+
 class AppConfig(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict()
     python_env: str | None = None
@@ -86,7 +92,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     enable_metrics: bool = False
     tracing_header: str = "x-cdp-request-id"
 
-    # Bedrock model inference configuration
+    aws: AwsConfig = AwsConfig()
     bedrock: BedrockConfig = BedrockConfig()
 
 

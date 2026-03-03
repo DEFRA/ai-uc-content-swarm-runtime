@@ -32,12 +32,13 @@ services:
       - mongodb-data:/data
     restart: always
 
-  service:
+  ai-uc-content-swarm:
     build:
       context: .
       target: development
     ports:
       - 8085:8085
+      - 5679:5679
     links:
       - "localstack:localstack"
       - "mongodb:mongodb"
@@ -46,8 +47,6 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_started
-    profiles:
-      - service
     env_file:
       - ".env"
     environment:

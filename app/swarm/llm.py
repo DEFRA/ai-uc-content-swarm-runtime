@@ -1,9 +1,16 @@
+import boto3
 from pydantic_ai.models import bedrock as bedrock_models
 from pydantic_ai.providers import bedrock as bedrock_providers
 
 from app import config
 
-settings = config.get_config()
+settings: config.AppConfig = config.get_config()
+
+bedrock_runtime = boto3.client(
+    "bedrock-runtime",
+    region_name=settings.aws.region_name,
+    aws_account_id=settings.aws.account_id,
+)
 
 
 def _setup_model_settings(
@@ -25,7 +32,7 @@ def _setup_model_settings(
     )
 
 
-provider = bedrock_providers.BedrockProvider(region_name="eu-west-2")
+provider = bedrock_providers.BedrockProvider(bedrock_client=bedrock_runtime)
 
 haiku_config = settings.bedrock.claude_haiku
 sonnet_config = settings.bedrock.claude_sonnet
@@ -43,6 +50,8 @@ claude_haiku = bedrock_models.BedrockConverseModel(
     profile=provider.model_profile(settings.bedrock.claude_haiku.model_id),
     settings=claude_haiku_settings,
 )
+
+print(claude_haiku.model_name)
 
 claude_sonnet = bedrock_models.BedrockConverseModel(
     settings.bedrock.claude_sonnet.inference_profile,
