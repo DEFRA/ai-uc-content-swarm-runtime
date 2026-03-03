@@ -5,21 +5,22 @@ import httpx
 import app.common.tracing as tracing
 from app import config
 
-config = config.get_config()
+# avoid shadowing the module name; keep a properly-typed config instance
+app_config = config.get_config()
 
 logger = logging.getLogger(__name__)
 
 
-async def async_hook_request_tracing(request):
+async def async_hook_request_tracing(request: httpx.Request) -> None:
     trace_id = tracing.ctx_trace_id.get(None)
     if trace_id:
-        request.headers[config.tracing_header] = trace_id
+        request.headers[app_config.tracing_header] = trace_id
 
 
-def hook_request_tracing(request):
+def hook_request_tracing(request: httpx.Request) -> None:
     trace_id = tracing.ctx_trace_id.get(None)
     if trace_id:
-        request.headers[config.tracing_header] = trace_id
+        request.headers[app_config.tracing_header] = trace_id
 
 
 def create_async_client(request_timeout: int = 30) -> httpx.AsyncClient:
@@ -32,12 +33,9 @@ def create_async_client(request_timeout: int = 30) -> httpx.AsyncClient:
     Returns:
         Configured httpx.AsyncClient instance
     """
-    client_kwargs = {
-        "timeout": request_timeout,
-        "event_hooks": {"request": [async_hook_request_tracing]},
-    }
-
-    return httpx.AsyncClient(**client_kwargs)
+    return httpx.AsyncClient(
+        timeout=request_timeout, event_hooks={"request": [async_hook_request_tracing]}
+    )
 
 
 def create_client(request_timeout: int = 30) -> httpx.Client:
@@ -50,9 +48,6 @@ def create_client(request_timeout: int = 30) -> httpx.Client:
     Returns:
         Configured httpx.Client instance
     """
-    client_kwargs = {
-        "timeout": request_timeout,
-        "event_hooks": {"request": [hook_request_tracing]},
-    }
-
-    return httpx.Client(**client_kwargs)
+    return httpx.Client(
+        timeout=request_timeout, event_hooks={"request": [hook_request_tracing]}
+    )
