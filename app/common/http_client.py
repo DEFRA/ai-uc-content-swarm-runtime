@@ -2,8 +2,8 @@ import logging
 
 import httpx
 
-from app import config
 import app.common.tracing as tracing
+from app import config
 
 config = config.get_config()
 

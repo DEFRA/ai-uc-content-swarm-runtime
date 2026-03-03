@@ -20,7 +20,7 @@ class ExtraFieldsFilter(logging.Filter):
             http["request"] = {"method": req.get("method", None)}
         if resp:
             http["response"] = resp
-        
+
         if http:
             record.http = http
         return True

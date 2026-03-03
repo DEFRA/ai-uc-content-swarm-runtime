@@ -19,7 +19,8 @@ class RunResponse(pydantic.BaseModel):
 
 @router.post("/run")
 async def run_swarm(
-    request: RunRequest, runner: Annotated[runner.SwarmRunner, Depends(dependencies.get_swarm_runner)]
+    request: RunRequest,
+    runner: Annotated[runner.SwarmRunner, Depends(dependencies.get_swarm_runner)],
 ) -> RunResponse:
     output = await runner.run(request.task)
     return RunResponse(output=output)
