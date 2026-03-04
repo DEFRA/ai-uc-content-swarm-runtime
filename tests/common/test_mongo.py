@@ -4,7 +4,7 @@ import pytest
 import pytest_mock
 
 from app.common import mongo
-from app.config import config
+from app.config import get_config
 
 
 # Reset the global client variable before each test
@@ -33,7 +33,7 @@ async def test_get_mongo_client_initialization(
     client = await mongo.get_mongo_client()
 
     assert client == mock_instance
-    mock_client_cls.assert_called_once_with(config.mongo_uri)
+    mock_client_cls.assert_called_once_with(get_config().mongo_uri)
     mock_db.command.assert_awaited_once_with("ping")
 
 
@@ -42,7 +42,7 @@ async def test_get_mongo_client_with_custom_tls(
     mocker: pytest_mock.MockerFixture, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # Mock config and custom certs
-    monkeypatch.setattr(config, "mongo_truststore", "custom-cert-key")
+    monkeypatch.setattr(get_config(), "mongo_truststore", "custom-cert-key")
     mocker.patch.dict(
         "app.common.tls.custom_ca_certs", {"custom-cert-key": "/path/to/cert.pem"}
     )
@@ -57,7 +57,7 @@ async def test_get_mongo_client_with_custom_tls(
 
     # Verify TLS param was passed
     mock_client_cls.assert_called_once_with(
-        config.mongo_uri, tlsCAFile="/path/to/cert.pem"
+        get_config().mongo_uri, tlsCAFile="/path/to/cert.pem"
     )
 
 
@@ -87,7 +87,7 @@ async def test_get_db(mocker: pytest_mock.MockerFixture) -> None:
     # First call initializes
     result = await mongo.get_db(mock_client)
     assert result == mock_db
-    mock_client.get_database.assert_called_once_with(config.mongo_database)
+    mock_client.get_database.assert_called_once_with(get_config().mongo_database)
 
     # Second call returns cached
     result2 = await mongo.get_db(mock_client)

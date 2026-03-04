@@ -1,42 +1,26 @@
-from logging import getLogger
-from typing import Any
+import logging
 
 import httpx
 
-from app.common.tracing import ctx_trace_id
-from app.config import config
+import app.common.tracing as tracing
+from app import config
 
-logger = getLogger(__name__)
+# avoid shadowing the module name; keep a properly-typed config instance
+app_config = config.get_config()
 
-async_proxy_mounts = (
-    {
-        "http://": httpx.AsyncHTTPTransport(proxy=str(config.http_proxy)),
-        "https://": httpx.AsyncHTTPTransport(proxy=str(config.http_proxy)),
-    }
-    if config.http_proxy
-    else {}
-)
-
-sync_proxy_mounts = (
-    {
-        "http://": httpx.HTTPTransport(proxy=str(config.http_proxy)),
-        "https://": httpx.HTTPTransport(proxy=str(config.http_proxy)),
-    }
-    if config.http_proxy
-    else {}
-)
+logger = logging.getLogger(__name__)
 
 
 async def async_hook_request_tracing(request: httpx.Request) -> None:
-    trace_id = ctx_trace_id.get(None)
+    trace_id = tracing.ctx_trace_id.get(None)
     if trace_id:
-        request.headers[config.tracing_header] = trace_id
+        request.headers[app_config.tracing_header] = trace_id
 
 
 def hook_request_tracing(request: httpx.Request) -> None:
-    trace_id = ctx_trace_id.get(None)
+    trace_id = tracing.ctx_trace_id.get(None)
     if trace_id:
-        request.headers[config.tracing_header] = trace_id
+        request.headers[app_config.tracing_header] = trace_id
 
 
 def create_async_client(request_timeout: int = 30) -> httpx.AsyncClient:
@@ -49,15 +33,9 @@ def create_async_client(request_timeout: int = 30) -> httpx.AsyncClient:
     Returns:
         Configured httpx.AsyncClient instance
     """
-    client_kwargs: dict[str, Any] = {
-        "timeout": request_timeout,
-        "event_hooks": {"request": [async_hook_request_tracing]},
-    }
-
-    if config.http_proxy:
-        client_kwargs["mounts"] = async_proxy_mounts
-
-    return httpx.AsyncClient(**client_kwargs)
+    return httpx.AsyncClient(
+        timeout=request_timeout, event_hooks={"request": [async_hook_request_tracing]}
+    )
 
 
 def create_client(request_timeout: int = 30) -> httpx.Client:
@@ -70,12 +48,6 @@ def create_client(request_timeout: int = 30) -> httpx.Client:
     Returns:
         Configured httpx.Client instance
     """
-    client_kwargs: dict[str, Any] = {
-        "timeout": request_timeout,
-        "event_hooks": {"request": [hook_request_tracing]},
-    }
-
-    if config.http_proxy:
-        client_kwargs["mounts"] = sync_proxy_mounts
-
-    return httpx.Client(**client_kwargs)
+    return httpx.Client(
+        timeout=request_timeout, event_hooks={"request": [hook_request_tracing]}
+    )

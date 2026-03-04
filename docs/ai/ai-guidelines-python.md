@@ -173,6 +173,12 @@ The assistant SHOULD avoid:
 
 ---
 
+---
+## 6. Further Reading
+You should ensure you fetch the team's Python style guide and any project-specific guidelines to align with existing conventions.
+https://github.com/DEFRA/aice-team/blob/main/style-guides/python.md
+---
+
 ## 6. Self-checklist for AI-generated Python Changes
 
 Before finalising, the assistant SHOULD verify:

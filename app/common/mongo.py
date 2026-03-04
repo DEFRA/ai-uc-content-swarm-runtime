@@ -4,8 +4,10 @@ from fastapi import Depends
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
-from app.common.tls import custom_ca_certs
-from app.config import config
+import app.common.tls as tls
+import app.config as app_config
+
+config = app_config.get_config()
 
 logger = getLogger(__name__)
 
@@ -18,7 +20,7 @@ async def get_mongo_client() -> AsyncMongoClient:
     if client is None:
         # Use the custom CA Certs from env vars if set.
         # We can remove this once we migrate to mongo Atlas.
-        cert = custom_ca_certs.get(config.mongo_truststore)
+        cert = tls.custom_ca_certs.get(config.mongo_truststore)
         if cert:
             logger.info(
                 "Creating MongoDB client with custom TLS cert %s",
