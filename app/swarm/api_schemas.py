@@ -1,5 +1,6 @@
 import pydantic
 
+
 class RunRequest(pydantic.BaseModel):
     task: str
 

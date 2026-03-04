@@ -13,15 +13,7 @@ class SwarmRunner:
         run_usage: pydantic_ai.RunUsage = pydantic_ai.RunUsage()
 
         entry = await manager.manager_agent.run(
-            task,
-            model=llm.claude_haiku,
-            usage=run_usage,
-            deps=run_dependencies
+            task, model=llm.claude_haiku, usage=run_usage, deps=run_dependencies
         )
 
         return entry.output
-    
-    async def resume_run(self) -> str:
-        """Resumes a paused swarm run with the given run ID."""
-
-        raise NotImplementedError("Run resumption is not yet implemented.")
