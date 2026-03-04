@@ -1,10 +1,10 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 import pydantic_ai.messages
 
 
-class ContextTypeEnum(Enum):
+class ContextTypeEnum(StrEnum):
     POLICY = "policy"
     LEGLISLATION = "legislation"
 
