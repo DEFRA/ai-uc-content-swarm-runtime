@@ -4,14 +4,14 @@ from enum import StrEnum
 import pydantic_ai.messages
 
 
-class ContextTypeEnum(StrEnum):
+class ContextType(StrEnum):
     POLICY = "policy"
     LEGLISLATION = "legislation"
 
 
 @dataclass
 class ContextDocument:
-    type: ContextTypeEnum
+    type: ContextType
     name: str
     content: str
 
