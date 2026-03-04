@@ -11,8 +11,15 @@ def _setup_model(
     model_config: config.BedrockModelConfig,
 ) -> bedrock_models.BedrockConverseModel:
     """Create a BedrockConverseModel from configuration."""
-    settings: bedrock_models.BedrockModelSettings | None = None
     guardrails = model_config.guardrails
+
+    settings = bedrock_models.BedrockModelSettings(
+        bedrock_guardrail_config={
+            "guardrailIdentifier": guardrails.id,
+            "guardrailVersion": guardrails.version,
+            "trace": "enabled",
+        }
+    ) if guardrails else None
 
     if guardrails:
         settings = bedrock_models.BedrockModelSettings(
