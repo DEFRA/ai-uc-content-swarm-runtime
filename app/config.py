@@ -12,7 +12,7 @@ class BedrockGuardrailConfig(pydantic.BaseModel):
         ...,
         pattern=r"^(|([a-z0-9-:.]+)|(arn:aws(-[^:]+)?:bedrock:[a-z0-9-]{1,20}:[0-9]{12}:guardrail/[a-z0-9-:.]+))$",
     )
-    version: str = pydantic.Field(..., pattern=r"^(([1-9][0-9]{0,7})|DRAFT)$")
+    version: str = pydantic.Field(..., pattern=r"^(([0-9]{1,8})|(DRAFT))$")
 
 
 class BedrockModelConfig(pydantic.BaseModel):
