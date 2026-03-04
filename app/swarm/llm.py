@@ -4,7 +4,8 @@ from pydantic_ai.providers import bedrock as bedrock_providers
 from app import config
 
 settings = config.get_config()
-provider = bedrock_providers.BedrockProvider()
+
+provider = bedrock_providers.BedrockProvider(region_name=settings.aws_region)
 
 
 def _setup_model(

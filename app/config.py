@@ -75,6 +75,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8086
     log_config: str | None = None
+    aws_region: str = "eu-west-2"
     mongo_uri: str | None = None
     mongo_database: str = "ai-uc-content-swarm-runtime"
     mongo_truststore: str = "TRUSTSTORE_CDP_ROOT_CA"
