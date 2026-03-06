@@ -5,7 +5,6 @@ import httpx
 import app.common.tracing as tracing
 from app import config
 
-# avoid shadowing the module name; keep a properly-typed config instance
 app_config = config.get_config()
 
 logger = logging.getLogger(__name__)

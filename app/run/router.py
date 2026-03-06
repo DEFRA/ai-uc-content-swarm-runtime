@@ -1,0 +1,88 @@
+import uuid
+from datetime import UTC, datetime
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+import app.run.api_schemas as api_schemas
+import app.run.context.router as context_router
+import app.run.dependencies as run_dependencies
+import app.run.models as models
+import app.run.service as run_service
+
+router = APIRouter(prefix="/runs", tags=["runs"])
+
+router.include_router(context_router.router)
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_run(
+    request: api_schemas.RunCreateRequest,
+    service: Annotated[
+        run_service.RunService, Depends(run_dependencies.get_run_service)
+    ],
+) -> api_schemas.RunResponse:
+    """Create a new run.
+
+    Args:
+        request: The run creation request.
+        service: The RunService instance (injected).
+
+    Returns:
+        The created Run record with status=pending.
+    """
+    now = datetime.now(tz=UTC)
+
+    run = models.Run(
+        id=str(uuid.uuid4()),
+        name=request.name,
+        status=models.RunStatus.SETUP,
+        created_at=now,
+        updated_at=now,
+    )
+
+    run = await service.setup_run(run)
+
+    return api_schemas.RunResponse(
+        id=run.id,
+        name=run.name,
+        status=run.status,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )
+
+
+@router.get("/{run_id}")
+async def get_run(
+    run_id: str,
+    service: Annotated[
+        run_service.RunService, Depends(run_dependencies.get_run_service)
+    ],
+) -> api_schemas.RunResponse:
+    """Retrieve a run by ID.
+
+    Args:
+        run_id: The ID of the run to retrieve.
+        service: The RunService instance (injected).
+
+    Returns:
+        The Run record with all associated contexts.
+
+    Raises:
+        HTTPException: 404 if the run is not found.
+    """
+    run = await service.get_run(run_id)
+
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run with id {run_id} not found",
+        )
+
+    return api_schemas.RunResponse(
+        id=run.id,
+        name=run.name,
+        status=run.status,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )

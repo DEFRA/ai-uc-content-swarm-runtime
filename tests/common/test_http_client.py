@@ -1,8 +1,7 @@
 import httpx
 import pytest
 
-from app.common.http_client import hook_request_tracing
-from app.common.tracing import ctx_trace_id
+from app.common import http_client, tracing
 
 
 def mock_handler(request: httpx.Request) -> httpx.Response:
@@ -11,9 +10,9 @@ def mock_handler(request: httpx.Request) -> httpx.Response:
 
 
 def test_trace_id_missing() -> None:
-    ctx_trace_id.set("")
+    tracing.ctx_trace_id.set("")
     client = httpx.Client(
-        event_hooks={"request": [hook_request_tracing]},
+        event_hooks={"request": [http_client.hook_request_tracing]},
         transport=httpx.MockTransport(mock_handler),
     )
     resp = client.get("http://localhost:1234/test")
@@ -21,9 +20,9 @@ def test_trace_id_missing() -> None:
 
 
 def test_trace_id_set() -> None:
-    ctx_trace_id.set("trace-id-value")
+    tracing.ctx_trace_id.set("trace-id-value")
     client = httpx.Client(
-        event_hooks={"request": [hook_request_tracing]},
+        event_hooks={"request": [http_client.hook_request_tracing]},
         transport=httpx.MockTransport(mock_handler),
     )
     resp = client.get("http://localhost:1234/test")
@@ -46,7 +45,7 @@ def test_create_client_with_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
 
     importlib.reload(app.common.http_client)
 
-    # Verify clients can be created
+    # Verify clients can be created (use reloaded module)
     client = app.common.http_client.create_client()
     assert client is not None
 

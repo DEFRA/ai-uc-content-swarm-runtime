@@ -1,9 +1,9 @@
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 
-from app.entrypoints.fastapi import app
+from app.entrypoints import fastapi
 
-client = TestClient(app)
+client = TestClient(fastapi.app)
 
 
 def test_lifespan(mocker: MockerFixture) -> None:
@@ -13,7 +13,7 @@ def test_lifespan(mocker: MockerFixture) -> None:
     )
 
     # Using TestClient as a context manager triggers lifespan startup/shutdown
-    with TestClient(app):
+    with TestClient(fastapi.app):
         mock_get_mongo.assert_called_once()  # Startup: connect called
 
     mock_mongo_client.close.assert_awaited_once()  # Shutdown: close called

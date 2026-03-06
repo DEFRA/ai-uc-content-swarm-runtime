@@ -83,6 +83,12 @@ class AppConfig(pydantic_settings.BaseSettings):
     http_proxy: pydantic.HttpUrl | None = None
     enable_metrics: bool = False
     tracing_header: str = "x-cdp-request-id"
+    callback_base: str = pydantic.Field(..., validation_alias="HOST_URL")
+    cdp_uploader_base_url: str = pydantic.Field(
+        ..., validation_alias="CDP_UPLOADER_BASE_URL"
+    )
+    cdp_uploader_timeout: int = 30
+    context_bucket: str = pydantic.Field(..., validation_alias="CONTEXT_BUCKET")
 
     bedrock: BedrockConfig = BedrockConfig()  # type: ignore
 
@@ -97,7 +103,7 @@ def get_config() -> AppConfig:
         return config
 
     try:
-        config = AppConfig()
+        config = AppConfig.model_validate({})
 
         return config
     except pydantic.ValidationError as e:
