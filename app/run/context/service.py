@@ -1,4 +1,6 @@
 import logging
+import uuid
+from datetime import UTC, datetime
 
 from app import config
 from app.common import http_client
@@ -40,6 +42,9 @@ class ContextService:
             error_message = f"Run with ID {run_id} not found"
             raise run_models.RunNotFoundError(error_message)
 
+        # Generate a unique context_id for tracking this upload session
+        context_id = uuid.uuid4()
+
         async with http_client.create_async_client(
             settings.cdp_uploader_timeout
         ) as client:
@@ -49,15 +54,37 @@ class ContextService:
                     "redirect": request.redirect,
                     "s3Bucket": settings.context_bucket,
                     "s3Path": run_id,
-                    "callback": f"{settings.callback_base}/runs/{run_id}/contexts/callback",
+                    "callback": f"{settings.callback_base}/runs/{run_id}/contexts/{str(context_id)}/callback",
                     "mimeTypes": ["text/plain"],
-                    "metadata": {"run_id": run_id}
+                    "metadata": {"run_id": run_id},
                 },
             )
 
             resp.raise_for_status()
 
             data = api_schemas.CdpUploaderInitiateResponse(**resp.json())
+
+            # Create a pending context placeholder to store user input
+            pending_context = models.ContextMetadata(
+                id=context_id,
+                title=request.title,
+                s3_key="",  # Will be populated on callback
+                s3_bucket=settings.context_bucket,
+                content_type="",  # Will be populated on callback
+                checksum_sha256="",  # Will be populated on callback
+                status="pending",
+                created_at=datetime.now(tz=UTC),
+                description=request.description,
+            )
+
+            # Persist the pending context
+            await self.repository.append_context(run_id, pending_context)
+            logger.info(
+                "Created pending context %s for run %s with filename %s",
+                context_id,
+                run_id,
+                request.title,
+            )
 
             return models.UploadInitiation(
                 upload_id=data.upload_id,
@@ -66,35 +93,54 @@ class ContextService:
     async def handle_upload_callback(
         self,
         payload: api_schemas.CdpUploaderStatusPayload,
-        run_id: str | None = None,
+        run_id: str,
+        context_id: uuid.UUID,
     ) -> None:
         """Process and persist callback from uploader service.
 
         Args:
             payload: The callback payload from the uploader.
+            run_id: The run ID.
+            context_id: The context_id to match and update the pending context.
         """
-        # Prefer explicit run_id passed via the callback path; fall back to metadata
-        resolved_run_id = run_id or payload.metadata.get("run_id")
+        run = await self.repository.get_run(run_id)
 
-        if not resolved_run_id:
-            msg = "Missing run_id in uploader callback metadata or path"
-            raise ValueError(msg)
+        if run is None:
+            msg = f"Run with ID {run_id} not found for uploader callback"
+            raise run_models.RunNotFoundError(msg)
 
-        contexts: list[models.ContextMetadata] = []
+        # Find the pending context by context_id
+        pending_context = next(
+            (ctx for ctx in run.contexts if ctx.id == context_id), None
+        )
 
-        for form_value in payload.form.values():
-            if isinstance(form_value, api_schemas.FileUploadDetail):
-                context = models.ContextMetadata(
-                    id=form_value.file_id,
-                    filename=form_value.filename,
-                    s3_key=form_value.s3_key,
-                    s3_bucket=form_value.s3_bucket,
-                    content_type=form_value.content_type,
-                    checksum_sha256=form_value.checksum_sha256,
-                    status=form_value.file_status,
-                )
-                contexts.append(context)
-
-        if contexts:
-            await self.repository.append_contexts(resolved_run_id, contexts)
-            logger.info("Added %d context(s) to run %s", len(contexts), resolved_run_id)
+        if pending_context:
+            # Update the pending context with uploaded file details
+            # Process the first file from the callback
+            for form_value in payload.form.values():
+                if isinstance(form_value, api_schemas.FileUploadDetail):
+                    updated_context = models.ContextMetadata(
+                        id=context_id,
+                        title=pending_context.title,
+                        s3_key=form_value.s3_key,
+                        s3_bucket=form_value.s3_bucket,
+                        content_type=form_value.content_type,
+                        checksum_sha256=form_value.checksum_sha256,
+                        filename=form_value.filename,
+                        status=form_value.file_status,
+                        created_at=pending_context.created_at,
+                        description=pending_context.description,
+                    )
+                    await self.repository.append_context(run_id, updated_context)
+                    logger.info(
+                        "Updated pending context %s for run %s with file details",
+                        context_id,
+                        run_id,
+                    )
+                    return
+        else:
+            logger.warning(
+                "No pending context found for context_id %s in run %s",
+                context_id,
+                run_id,
+            )

@@ -1,3 +1,4 @@
+import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -25,6 +26,7 @@ class Run:
     created_at: datetime = datetime.now(tz=UTC)
     updated_at: datetime = datetime.now(tz=UTC)
     contexts: list[ContextMetadata] = field(default_factory=list)
+    context_ids: set[uuid.UUID] = field(default_factory=set)
 
 
 class RunNotFoundError(Exception):

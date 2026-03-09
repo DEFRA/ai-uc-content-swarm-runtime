@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import Annotated
 
 import fastapi
@@ -32,11 +33,7 @@ async def initiate_context_upload(
         service.ContextService, fastapi.Depends(dependencies.get_context_service)
     ],
 ) -> dict:
-    """Initiate a context/file upload session for a run.
-
-    Returns the upload_id that the frontend should use for uploading files.
-    The frontend must pass the run_id in the metadata when initiating the uploader.
-    """
+    """Initiate a context/file upload session for a run."""
     try:
         upload = await context_service.initiate_upload(run_id, request)
     except run_models.RunNotFoundError as e:
@@ -64,6 +61,7 @@ async def get_run_contexts(
         api_schemas.ContextResponse(
             id=ctx.id,
             filename=ctx.filename,
+            title=ctx.title,
             s3_key=ctx.s3_key,
             s3_bucket=ctx.s3_bucket,
             content_type=ctx.content_type,
@@ -75,9 +73,10 @@ async def get_run_contexts(
     ]
 
 
-@router.post("/runs/{run_id}/contexts/callback")
+@router.post("/runs/{run_id}/contexts/{context_id}/callback")
 async def handle_callback(
     run_id: str,
+    context_id: str,
     payload: api_schemas.CdpUploaderStatusPayload,
     context_service: Annotated[
         service.ContextService, fastapi.Depends(dependencies.get_context_service)
@@ -86,11 +85,21 @@ async def handle_callback(
     """Handle callbacks from the uploader service.
 
     Parses the uploaded files from the callback and creates context entries in the run.
+
+    Args:
+        run_id: The run ID.
+        context_id: The context_id path parameter to match and update the pending context.
+        payload: The callback payload from the uploader.
+        context_service: The context service.
     """
+
     logger.info(
-        "Received uploader callback for run_id: %s with status: %s",
+        "Received uploader callback for run_id: %s with status: %s, context_id: %s",
         run_id,
         payload.upload_status,
+        context_id,
     )
 
-    await context_service.handle_upload_callback(payload, run_id=run_id)
+    await context_service.handle_upload_callback(
+        payload, run_id=run_id, context_id=uuid.UUID(context_id)
+    )

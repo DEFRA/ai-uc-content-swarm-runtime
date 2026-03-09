@@ -1,8 +1,9 @@
+import uuid
 from abc import ABC, abstractmethod
 from logging import getLogger
 
-from bson import ObjectId
-from pymongo.asynchronous.database import AsyncDatabase
+import bson
+import pymongo.asynchronous.database
 
 import app.run.models as models
 from app.run.context.models import ContextMetadata
@@ -36,30 +37,24 @@ class RunRepository(ABC):
         """
 
     @abstractmethod
-    async def append_context(self, run_id: str, context: ContextMetadata) -> None:
-        """Append a context document to a run.
-
-        Args:
-            run_id: The ID of the run.
-            context: The ContextMetadata to append.
-        """
-
-    @abstractmethod
-    async def append_contexts(
-        self, run_id: str, contexts: list[ContextMetadata]
+    async def append_context(
+        self, run_id: str, context: ContextMetadata | list[ContextMetadata]
     ) -> None:
-        """Append multiple context documents to a run.
+        """Append one or more context documents to a run.
+
+        For each provided context: if a context with the same id exists in the run,
+        it is updated; otherwise it is appended.
 
         Args:
             run_id: The ID of the run.
-            contexts: List of ContextMetadata to append.
+            context: A ContextMetadata or list of ContextMetadata to append/upsert.
         """
 
 
 class MongoRunRepository(RunRepository):
     """MongoDB-backed implementation of RunRepository."""
 
-    def __init__(self, db: AsyncDatabase) -> None:
+    def __init__(self, db: pymongo.asynchronous.database.AsyncDatabase) -> None:
         """Initialize the adapter with a MongoDB database.
 
         Args:
@@ -106,25 +101,34 @@ class MongoRunRepository(RunRepository):
         Returns:
             The Run record if found, None otherwise.
         """
-        doc = await self.collection.find_one({"_id": ObjectId(run_id)})
+        doc = await self.collection.find_one({"_id": bson.ObjectId(run_id)})
 
         if not doc:
             return None
 
         contexts = []
         for ctx_doc in doc.get("contexts", []):
+            # Stored as BSON Binary UUID subtype; convert to Python UUID
+            ctx_id = uuid.UUID(bytes=ctx_doc["id"])
+
             contexts.append(
                 ContextMetadata(
-                    id=ctx_doc["id"],
-                    filename=ctx_doc["filename"],
+                    id=ctx_id,
+                    title=ctx_doc["title"],
                     s3_key=ctx_doc["s3_key"],
                     s3_bucket=ctx_doc["s3_bucket"],
                     content_type=ctx_doc["content_type"],
                     checksum_sha256=ctx_doc["checksum_sha256"],
+                    filename=ctx_doc.get("filename"),
                     status=ctx_doc.get("status", "uploaded"),
                     created_at=ctx_doc["created_at"],
+                    description=ctx_doc.get("description"),
                 )
             )
+        # Build set of context IDs for O(1) membership checks from stored contexts
+        context_ids_set = set()
+        for ctx in contexts:
+            context_ids_set.add(ctx.id)
 
         return models.Run(
             id=str(doc["_id"]),
@@ -133,58 +137,37 @@ class MongoRunRepository(RunRepository):
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
             contexts=contexts,
+            context_ids=context_ids_set,
         )
 
-    async def append_context(self, run_id: str, context: ContextMetadata) -> None:
-        """Append a context document to a run.
-
-        Args:
-            run_id: The ID of the run.
-            context: The ContextMetadata to append.
-        """
-        try:
-            oid = ObjectId(run_id)
-        except Exception:
-            # Invalid ObjectId format
-            return
-
-        await self.collection.update_one(
-            {"_id": oid},
-            {
-                "$push": {
-                    "contexts": {
-                        "id": context.id,
-                        "filename": context.filename,
-                        "s3_key": context.s3_key,
-                        "s3_bucket": context.s3_bucket,
-                        "content_type": context.content_type,
-                        "checksum_sha256": context.checksum_sha256,
-                        "status": context.status,
-                        "created_at": context.created_at,
-                    }
-                }
-            },
-        )
-
-    async def append_contexts(
-        self, run_id: str, contexts: list[ContextMetadata]
+    async def append_context(
+        self, run_id: str, context: ContextMetadata | list[ContextMetadata]
     ) -> None:
-        """Append multiple context documents to a run.
+        """Append one or more context documents to a run.
+
+        For each provided context: if a context with the same id exists in the run,
+        it is updated; otherwise it is appended.
 
         Args:
             run_id: The ID of the run.
-            contexts: List of ContextMetadata to append.
+            context: A ContextMetadata or list of ContextMetadata to append/upsert.
         """
         try:
-            oid = ObjectId(run_id)
+            oid = bson.ObjectId(run_id)
         except Exception:
             # Invalid ObjectId format
             return
 
-        context_docs = [
-            {
-                "id": ctx.id,
-                "filename": ctx.filename,
+        # Normalize to list
+        contexts = [context] if isinstance(context, ContextMetadata) else context
+
+        for ctx in contexts:
+            # Store UUID as BSON Binary with UUID subtype
+            ctx_id_binary = bson.Binary(ctx.id.bytes, subtype=4)
+
+            context_doc = {
+                "id": ctx_id_binary,
+                "title": ctx.title,
                 "s3_key": ctx.s3_key,
                 "s3_bucket": ctx.s3_bucket,
                 "content_type": ctx.content_type,
@@ -192,10 +175,20 @@ class MongoRunRepository(RunRepository):
                 "status": ctx.status,
                 "created_at": ctx.created_at,
             }
-            for ctx in contexts
-        ]
+            if ctx.filename is not None:
+                context_doc["filename"] = ctx.filename
+            if ctx.description is not None:
+                context_doc["description"] = ctx.description
 
-        await self.collection.update_one(
-            {"_id": oid},
-            {"$push": {"contexts": {"$each": context_docs}}},
-        )
+            # Try to update an existing context by id, or append if not found
+            result = await self.collection.update_one(
+                {"_id": oid, "contexts.id": ctx_id_binary},
+                {"$set": {"contexts.$": context_doc}},
+            )
+
+            if result.modified_count == 0:
+                # Context not found, append it
+                await self.collection.update_one(
+                    {"_id": oid},
+                    {"$push": {"contexts": context_doc}},
+                )
