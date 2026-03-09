@@ -68,10 +68,9 @@ class ContextService:
             pending_context = models.ContextMetadata(
                 id=context_id,
                 title=request.title,
-                s3_key="",  # Will be populated on callback
                 s3_bucket=settings.context_bucket,
-                content_type="",  # Will be populated on callback
-                checksum_sha256="",  # Will be populated on callback
+                s3_key=None,
+                checksum_sha256=None,
                 status="pending",
                 created_at=datetime.now(tz=UTC),
                 description=request.description,
@@ -124,7 +123,6 @@ class ContextService:
                         title=pending_context.title,
                         s3_key=form_value.s3_key,
                         s3_bucket=form_value.s3_bucket,
-                        content_type=form_value.content_type,
                         checksum_sha256=form_value.checksum_sha256,
                         filename=form_value.filename,
                         status=form_value.file_status,

@@ -14,10 +14,9 @@ class ContextMetadata:
 
     id: uuid.UUID
     title: str
-    s3_key: str
     s3_bucket: str
-    content_type: str
-    checksum_sha256: str
+    s3_key: str | None = None
+    checksum_sha256: str | None = None
     filename: str | None = None
     status: str = "uploaded"
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))

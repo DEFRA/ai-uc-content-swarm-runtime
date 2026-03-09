@@ -24,7 +24,6 @@ class FileUploadDetail(pydantic.BaseModel):
 
     file_id: str = pydantic.Field(..., alias="fileId")
     filename: str
-    content_type: str = pydantic.Field(..., alias="contentType")
     file_status: str = pydantic.Field(..., alias="fileStatus")
     content_length: int = pydantic.Field(..., alias="contentLength")
     checksum_sha256: str = pydantic.Field(..., alias="checksumSha256")
@@ -62,13 +61,12 @@ class ContextResponse(pydantic.BaseModel):
         default=None, description="Filename of the uploaded content"
     )
     title: str = pydantic.Field(..., description="Title of the context document")
-    s3_key: str = pydantic.Field(
-        ..., description="S3 object key for the uploaded content"
+    s3_key: str | None = pydantic.Field(
+        None, description="S3 object key for the uploaded content"
     )
     s3_bucket: str = pydantic.Field(..., description="S3 bucket containing the file")
-    content_type: str = pydantic.Field(..., description="Content type of the file")
-    checksum_sha256: str = pydantic.Field(
-        ..., description="SHA256 checksum of the file"
+    checksum_sha256: str | None = pydantic.Field(
+        None, description="SHA256 checksum of the file"
     )
     status: str = pydantic.Field(
         default="uploaded", description="Status of the context document"

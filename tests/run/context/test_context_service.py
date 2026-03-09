@@ -87,9 +87,8 @@ class TestContextService:
         assert pending_context.description == "Test description"
         assert pending_context.status == "pending"
         assert pending_context.s3_bucket == "test-bucket"
-        assert pending_context.s3_key == ""
-        assert pending_context.checksum_sha256 == ""
-        assert pending_context.content_type == ""
+        assert pending_context.s3_key is None
+        assert pending_context.checksum_sha256 is None
 
     @pytest.mark.asyncio
     async def test_initiate_upload_includes_context_id_in_callback_url(
@@ -168,10 +167,9 @@ class TestContextService:
         pending_context = models.ContextMetadata(
             id=context_id,
             title="test.txt",
-            s3_key="",
             s3_bucket="test-bucket",
-            content_type="",
-            checksum_sha256="",
+            s3_key=None,
+            checksum_sha256=None,
             filename=None,
             status="pending",
             created_at=now,
@@ -195,7 +193,6 @@ class TestContextService:
                 "file": api_schemas.FileUploadDetail(
                     fileId="file-123",
                     filename="test.txt",
-                    contentType="text/plain",
                     fileStatus="uploaded",
                     contentLength=1024,
                     checksumSha256="abc123def456",
@@ -220,7 +217,6 @@ class TestContextService:
         assert updated_context.filename == "test.txt"
         assert updated_context.s3_key == "s3/path/to/file"
         assert updated_context.s3_bucket == "s3-bucket"
-        assert updated_context.content_type == "text/plain"
         assert updated_context.checksum_sha256 == "abc123def456"
         assert updated_context.status == "uploaded"
         assert updated_context.description == "Test description"
@@ -295,10 +291,9 @@ class TestContextService:
         pending_context = models.ContextMetadata(
             id=context_id,
             title="test.txt",
-            s3_key="",
             s3_bucket="test-bucket",
-            content_type="",
-            checksum_sha256="",
+            s3_key=None,
+            checksum_sha256=None,
             status="pending",
             created_at=now,
         )
@@ -320,7 +315,6 @@ class TestContextService:
                 "file1": api_schemas.FileUploadDetail(
                     fileId="file-1",
                     filename="test.txt",
-                    contentType="text/plain",
                     fileStatus="uploaded",
                     contentLength=1024,
                     checksumSha256="abc123",
@@ -331,7 +325,6 @@ class TestContextService:
                 "file2": api_schemas.FileUploadDetail(
                     fileId="file-2",
                     filename="other.txt",
-                    contentType="text/plain",
                     fileStatus="uploaded",
                     contentLength=2048,
                     checksumSha256="def456",

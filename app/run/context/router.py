@@ -64,7 +64,6 @@ async def get_run_contexts(
             title=ctx.title,
             s3_key=ctx.s3_key,
             s3_bucket=ctx.s3_bucket,
-            content_type=ctx.content_type,
             checksum_sha256=ctx.checksum_sha256,
             status=ctx.status,
             created_at=ctx.created_at,

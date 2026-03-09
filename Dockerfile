@@ -15,13 +15,6 @@ COPY --chown=nonroot:nonroot README.md .
 COPY --chown=nonroot:nonroot uv.lock .
 COPY --chown=nonroot:nonroot app/ ./app/
 
-USER root
-
-RUN apt update && \
-    apt install -y curl
-
-USER nonroot
-
 RUN --mount=type=cache,target=/home/nonroot/.cache/uv,uid=1000,gid=1000 \
     uv sync --locked --link-mode=copy
 
