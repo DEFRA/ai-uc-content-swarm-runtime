@@ -66,7 +66,7 @@ class TestContextService:
         request = api_schemas.ContextUploadRequest(
             title="test.txt",
             description="Test description",
-            redirect=None,
+            redirect="http://localhost:8086/redirect",
         )
 
         # Act
@@ -120,6 +120,7 @@ class TestContextService:
         request = api_schemas.ContextUploadRequest(
             title="test.txt",
             description=None,
+            redirect="http://localhost:8086/redirect",
         )
 
         # Act
@@ -145,6 +146,7 @@ class TestContextService:
         request = api_schemas.ContextUploadRequest(
             title="test.txt",
             description="desc",
+            redirect="http://localhost:8086/redirect",
         )
 
         with pytest.raises(run_models.RunNotFoundError):

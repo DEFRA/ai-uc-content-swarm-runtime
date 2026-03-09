@@ -4,6 +4,7 @@ from datetime import datetime
 import pydantic
 import pydantic.alias_generators
 
+
 class ContextUploadRequest(pydantic.BaseModel):
     title: str
     description: str | None = None
@@ -49,12 +50,17 @@ class CdpUploaderStatusPayload(pydantic.BaseModel):
 
 class ContextResponse(pydantic.BaseModel):
     """Response model for a context document attached to a run."""
-    model_config = pydantic.ConfigDict(populate_by_name=True, alias_generator=pydantic.alias_generators.to_camel)
+
+    model_config = pydantic.ConfigDict(
+        populate_by_name=True, alias_generator=pydantic.alias_generators.to_camel
+    )
 
     id: uuid.UUID = pydantic.Field(
         ..., description="Unique identifier for the context (fileId)"
     )
-    filename: str | None = pydantic.Field(default=None, description="Filename of the uploaded content")
+    filename: str | None = pydantic.Field(
+        default=None, description="Filename of the uploaded content"
+    )
     title: str = pydantic.Field(..., description="Title of the context document")
     s3_key: str = pydantic.Field(
         ..., description="S3 object key for the uploaded content"
