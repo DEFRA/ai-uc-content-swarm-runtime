@@ -47,6 +47,7 @@ async def initiate_context_upload(
 @router.get("/runs/{run_id}/contexts")
 async def get_run_contexts(
     run_id: str,
+    response: fastapi.Response,
     run_repo: Annotated[
         repository.RunRepository, fastapi.Depends(run_dependencies.get_run_repository)
     ],
@@ -54,7 +55,8 @@ async def get_run_contexts(
     """Get all context documents for a run."""
     run = await run_repo.get_run(run_id)
 
-    if not run or not run.contexts:
+    if not run or len(run.contexts) == 0:
+        response.status_code = fastapi.status.HTTP_204_NO_CONTENT
         return []
 
     return [

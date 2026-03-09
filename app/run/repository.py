@@ -89,7 +89,6 @@ class MongoRunRepository(RunRepository):
             status=run.status,
             created_at=run.created_at,
             updated_at=run.updated_at,
-            contexts=[],
         )
 
     async def get_run(self, run_id: str) -> models.Run | None:
@@ -106,38 +105,32 @@ class MongoRunRepository(RunRepository):
         if not doc:
             return None
 
-        contexts = []
-        for ctx_doc in doc.get("contexts", []):
-            # Stored as BSON Binary UUID subtype; convert to Python UUID
-            ctx_id = uuid.UUID(bytes=ctx_doc["id"])
-
-            contexts.append(
-                ContextMetadata(
-                    id=ctx_id,
-                    title=ctx_doc["title"],
-                    s3_bucket=ctx_doc["s3_bucket"],
-                    s3_key=ctx_doc.get("s3_key"),
-                    checksum_sha256=ctx_doc.get("checksum_sha256"),
-                    filename=ctx_doc.get("filename"),
-                    status=ctx_doc.get("status", "uploaded"),
-                    created_at=ctx_doc["created_at"],
-                    description=ctx_doc.get("description"),
-                )
-            )
-        # Build set of context IDs for O(1) membership checks from stored contexts
-        context_ids_set = set()
-        for ctx in contexts:
-            context_ids_set.add(ctx.id)
-
-        return models.Run(
+        run = models.Run(
             id=str(doc["_id"]),
             name=doc["name"],
             status=models.RunStatus(doc["status"]),
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
-            contexts=contexts,
-            context_ids=context_ids_set,
         )
+
+        for ctx_doc in doc.get("contexts", []):
+            ctx_id = uuid.UUID(bytes=ctx_doc["id"])
+
+            context = ContextMetadata(
+                id=ctx_id,
+                title=ctx_doc["title"],
+                s3_bucket=ctx_doc["s3_bucket"],
+                s3_key=ctx_doc.get("s3_key"),
+                checksum_sha256=ctx_doc.get("checksum_sha256"),
+                filename=ctx_doc.get("filename"),
+                status=ctx_doc.get("status", "uploaded"),
+                created_at=ctx_doc["created_at"],
+                description=ctx_doc.get("description"),
+            )
+
+            run.add_context(context)
+
+        return run
 
     async def append_context(
         self, run_id: str, context: ContextMetadata | list[ContextMetadata]

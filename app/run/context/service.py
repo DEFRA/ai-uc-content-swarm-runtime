@@ -78,11 +78,11 @@ class ContextService:
 
             # Persist the pending context
             await self.repository.append_context(run_id, pending_context)
+
             logger.info(
-                "Created pending context %s for run %s with filename %s",
+                "Created context upload session with context_id (%s) for run %s",
                 context_id,
                 run_id,
-                request.title,
             )
 
             return models.UploadInitiation(
@@ -108,14 +108,10 @@ class ContextService:
             msg = f"Run with ID {run_id} not found for uploader callback"
             raise run_models.RunNotFoundError(msg)
 
-        # Find the pending context by context_id
-        pending_context = next(
-            (ctx for ctx in run.contexts if ctx.id == context_id), None
-        )
+        pending_context = run.get_context(context_id)
 
         if pending_context:
-            # Update the pending context with uploaded file details
-            # Process the first file from the callback
+            # Return as soon as first file upload detail is processed since
             for form_value in payload.form.values():
                 if isinstance(form_value, api_schemas.FileUploadDetail):
                     updated_context = models.ContextMetadata(
@@ -130,11 +126,7 @@ class ContextService:
                         description=pending_context.description,
                     )
                     await self.repository.append_context(run_id, updated_context)
-                    logger.info(
-                        "Updated pending context %s for run %s with file details",
-                        context_id,
-                        run_id,
-                    )
+
                     return
         else:
             logger.warning(

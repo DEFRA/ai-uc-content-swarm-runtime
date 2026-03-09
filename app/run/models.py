@@ -25,8 +25,27 @@ class Run:
     status: RunStatus = RunStatus.SETUP
     created_at: datetime = datetime.now(tz=UTC)
     updated_at: datetime = datetime.now(tz=UTC)
-    contexts: list[ContextMetadata] = field(default_factory=list)
-    context_ids: set[uuid.UUID] = field(default_factory=set)
+    _contexts: list[ContextMetadata] = field(default_factory=list)
+    _context_map: dict[uuid.UUID, ContextMetadata] = field(
+        default_factory=dict, init=False
+    )
+
+    def add_context(self, context: ContextMetadata) -> None:
+        self._context_map[context.id] = context
+
+        self._contexts = list(self._context_map.values())
+
+    @property
+    def contexts(self) -> list[ContextMetadata]:
+        return self._contexts
+
+    def get_context(self, context_id: uuid.UUID) -> ContextMetadata | None:
+        return self._context_map.get(context_id)
+    
+    def __post_init__(self) -> None:
+        """Initialize _context_map from _contexts after dataclass init."""
+        for context in self._contexts:
+            self._context_map[context.id] = context
 
 
 class RunNotFoundError(Exception):
