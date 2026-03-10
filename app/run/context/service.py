@@ -64,7 +64,6 @@ class ContextService:
 
             data = api_schemas.CdpUploaderInitiateResponse(**resp.json())
 
-            # Create a pending context placeholder to store user input
             pending_context = models.ContextMetadata(
                 id=context_id,
                 title=request.title,
@@ -76,13 +75,13 @@ class ContextService:
                 description=request.description,
             )
 
-            # Persist the pending context
             await self.repository.append_context(run_id, pending_context)
 
             logger.info(
-                "Created context upload session with context_id (%s) for run %s",
-                context_id,
-                run_id,
+                "Initiated upload session %s for run %s with context ID %s",
+                data.upload_id,
+                run.id,
+                pending_context.id,
             )
 
             return models.UploadInitiation(
