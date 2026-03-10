@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from fastapi import Depends
+import fastapi
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -36,7 +36,9 @@ async def get_mongo_client() -> AsyncMongoClient:
     return client
 
 
-async def get_db(client: AsyncMongoClient = Depends(get_mongo_client)) -> AsyncDatabase:
+async def get_db(
+    client: AsyncMongoClient = fastapi.Depends(get_mongo_client),
+) -> AsyncDatabase:
     global db
     if db is None:
         db = client.get_database(config.mongo_database)
