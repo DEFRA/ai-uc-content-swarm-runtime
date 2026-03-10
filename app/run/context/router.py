@@ -6,8 +6,10 @@ import fastapi
 
 from app.run import dependencies as run_dependencies
 from app.run import models as run_models
-from app.run import repository
-from app.run.context import api_schemas, dependencies, service
+from app.run import service as run_service
+from app.run.context import api_schemas
+from app.run.context import dependencies as context_dependencies
+from app.run.context import service as context_service_module
 
 router = fastapi.APIRouter()
 
@@ -30,7 +32,8 @@ async def initiate_context_upload(
     run_id: str,
     request: api_schemas.ContextUploadRequest,
     context_service: Annotated[
-        service.ContextService, fastapi.Depends(dependencies.get_context_service)
+        context_service_module.ContextService,
+        fastapi.Depends(context_dependencies.get_context_service),
     ],
 ) -> dict:
     """Initiate a context/file upload session for a run."""
@@ -44,18 +47,39 @@ async def initiate_context_upload(
     return {"upload_id": upload.upload_id}
 
 
-@router.get("/runs/{run_id}/contexts")
+@router.get(
+    "/runs/{run_id}/contexts",
+    status_code=fastapi.status.HTTP_200_OK,
+    responses={
+        fastapi.status.HTTP_200_OK: {
+            "description": "List of context documents for the run"
+        },
+        fastapi.status.HTTP_204_NO_CONTENT: {
+            "description": "Run found but no contexts available"
+        },
+        fastapi.status.HTTP_404_NOT_FOUND: {
+            "description": "Run not found for the given run_id"
+        },
+    },
+)
 async def get_run_contexts(
     run_id: str,
     response: fastapi.Response,
-    run_repo: Annotated[
-        repository.RunRepository, fastapi.Depends(run_dependencies.get_run_repository)
+    run_service: Annotated[
+        run_service.RunService,
+        fastapi.Depends(run_dependencies.get_run_service),
     ],
 ) -> list[api_schemas.ContextResponse]:
     """Get all context documents for a run."""
-    run = await run_repo.get_run(run_id)
+    run = await run_service.get_run(run_id)
 
-    if not run or len(run.contexts) == 0:
+    if not run:
+        msg = f"Run with id {run_id} not found"
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_404_NOT_FOUND, detail=msg
+        )
+
+    if len(run.contexts) == 0:
         response.status_code = fastapi.status.HTTP_204_NO_CONTENT
         return []
 
@@ -80,7 +104,8 @@ async def handle_callback(
     context_id: str,
     payload: api_schemas.CdpUploaderStatusPayload,
     context_service: Annotated[
-        service.ContextService, fastapi.Depends(dependencies.get_context_service)
+        context_service_module.ContextService,
+        fastapi.Depends(context_dependencies.get_context_service),
     ],
 ) -> None:
     """Handle callbacks from the uploader service.
@@ -93,14 +118,6 @@ async def handle_callback(
         payload: The callback payload from the uploader.
         context_service: The context service.
     """
-
-    logger.info(
-        "Received uploader callback for run_id: %s with status: %s, context_id: %s",
-        run_id,
-        payload.upload_status,
-        context_id,
-    )
-
     await context_service.handle_upload_callback(
         payload, run_id=run_id, context_id=uuid.UUID(context_id)
     )

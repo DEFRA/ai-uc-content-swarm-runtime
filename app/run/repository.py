@@ -144,21 +144,13 @@ class MongoRunRepository(RunRepository):
             run_id: The ID of the run.
             context: A ContextMetadata or list of ContextMetadata to append/upsert.
         """
-        try:
-            oid = bson.ObjectId(run_id)
-        except Exception:
-            # Invalid ObjectId format
-            return
+        oid = bson.ObjectId(run_id)
 
-        # Normalize to list
         contexts = [context] if isinstance(context, ContextMetadata) else context
 
         for ctx in contexts:
-            # Store UUID as BSON Binary with UUID subtype
-            ctx_id_binary = bson.Binary(ctx.id.bytes, subtype=4)
-
             context_doc = {
-                "id": ctx_id_binary,
+                "id": ctx.id,
                 "title": ctx.title,
                 "s3_key": ctx.s3_key,
                 "s3_bucket": ctx.s3_bucket,
@@ -166,19 +158,19 @@ class MongoRunRepository(RunRepository):
                 "status": ctx.status,
                 "created_at": ctx.created_at,
             }
+
             if ctx.filename is not None:
                 context_doc["filename"] = ctx.filename
+
             if ctx.description is not None:
                 context_doc["description"] = ctx.description
 
-            # Try to update an existing context by id, or append if not found
             result = await self.collection.update_one(
-                {"_id": oid, "contexts.id": ctx_id_binary},
+                {"_id": oid, "contexts.id": ctx.id},
                 {"$set": {"contexts.$": context_doc}},
             )
 
             if result.modified_count == 0:
-                # Context not found, append it
                 await self.collection.update_one(
                     {"_id": oid},
                     {"$push": {"contexts": context_doc}},

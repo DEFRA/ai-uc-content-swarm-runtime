@@ -26,26 +26,34 @@ class Run:
     created_at: datetime = datetime.now(tz=UTC)
     updated_at: datetime = datetime.now(tz=UTC)
     _contexts: list[ContextMetadata] = field(default_factory=list)
-    _context_map: dict[uuid.UUID, ContextMetadata] = field(
-        default_factory=dict, init=False
-    )
+    _context_map: dict[uuid.UUID, int] = field(default_factory=dict, init=False)
+
+    def __post_init__(self) -> None:
+        """Populate the internal context map from the provided contexts.
+
+        This ensures `get_context` works for Run instances constructed with
+        an initial `_contexts` list (e.g. in tests or deserialization).
+        """
+        for idx, ctx in enumerate(self._contexts):
+            self._context_map[ctx.id] = idx
 
     def add_context(self, context: ContextMetadata) -> None:
-        self._context_map[context.id] = context
+        self._context_map[context.id] = len(self._contexts)
 
-        self._contexts = list(self._context_map.values())
+        self._contexts.append(context)
 
     @property
-    def contexts(self) -> list[ContextMetadata]:
-        return self._contexts
+    def contexts(self) -> tuple[ContextMetadata, ...]:
+        """Return contexts as an immutable tuple to prevent external mutation."""
+        return tuple(self._contexts)
 
     def get_context(self, context_id: uuid.UUID) -> ContextMetadata | None:
-        return self._context_map.get(context_id)
-    
-    def __post_init__(self) -> None:
-        """Initialize _context_map from _contexts after dataclass init."""
-        for context in self._contexts:
-            self._context_map[context.id] = context
+        idx = self._context_map.get(context_id)
+
+        if idx is not None:
+            return self._contexts[idx]
+
+        return None
 
 
 class RunNotFoundError(Exception):

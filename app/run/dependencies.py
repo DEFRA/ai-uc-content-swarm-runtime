@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+import fastapi
 from pymongo.asynchronous.database import AsyncDatabase
 
 import app.common.mongo as mongo
@@ -11,7 +11,7 @@ import app.swarm.runner as swarm_runner
 
 
 def get_run_repository(
-    db: AsyncDatabase = Depends(mongo.get_db),
+    db: AsyncDatabase = fastapi.Depends(mongo.get_db),
 ) -> repository.RunRepository:
     """Provide a RunRepository instance.
 
@@ -25,9 +25,11 @@ def get_run_repository(
 
 
 def get_run_service(
-    run_repository: Annotated[repository.RunRepository, Depends(get_run_repository)],
+    run_repository: Annotated[
+        repository.RunRepository, fastapi.Depends(get_run_repository)
+    ],
     swarm: Annotated[
-        swarm_runner.SwarmRunner, Depends(swarm_dependencies.get_swarm_runner)
+        swarm_runner.SwarmRunner, fastapi.Depends(swarm_dependencies.get_swarm_runner)
     ],
 ) -> run_service.RunService:
     """Provide a RunService instance.

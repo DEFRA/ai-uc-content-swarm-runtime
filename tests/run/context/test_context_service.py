@@ -33,7 +33,6 @@ class TestContextService:
             status=run_models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,
-            _contexts=[],
         )
 
     @pytest.mark.asyncio
@@ -182,8 +181,8 @@ class TestContextService:
             status=run_models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,
-            _contexts=[pending_context],
         )
+        run.add_context(pending_context)
 
         mock_repository.get_run.return_value = run
 
@@ -256,7 +255,6 @@ class TestContextService:
             status=run_models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,
-            _contexts=[],
         )
 
         mock_repository.get_run.return_value = run
@@ -304,8 +302,8 @@ class TestContextService:
             status=run_models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,
-            _contexts=[pending_context],
         )
+        run.add_context(pending_context)
 
         mock_repository.get_run.return_value = run
 

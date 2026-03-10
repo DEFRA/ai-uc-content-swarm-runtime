@@ -3,7 +3,7 @@ from collections.abc import Awaitable, Callable
 from logging import getLogger
 from typing import Any
 
-from fastapi import Request, Response
+import fastapi
 from starlette.middleware.base import BaseHTTPMiddleware
 
 import app.config as app_config
@@ -25,8 +25,10 @@ ctx_response: contextvars.ContextVar[dict[str, Any]] = contextvars.ContextVar(
 # for the duration of the request in the ContextVar `ctx_trace_id`.
 class TraceIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+        self,
+        request: fastapi.Request,
+        call_next: Callable[[fastapi.Request], Awaitable[fastapi.Response]],
+    ) -> fastapi.Response:
         req_trace_id = request.headers.get(config.tracing_header, None)
         if req_trace_id:
             ctx_trace_id.set(req_trace_id)

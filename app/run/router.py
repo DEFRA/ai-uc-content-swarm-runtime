@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import fastapi
 
 import app.run.api_schemas as api_schemas
 import app.run.context.router as context_router
@@ -10,16 +10,16 @@ import app.run.dependencies as run_dependencies
 import app.run.models as models
 import app.run.service as run_service
 
-router = APIRouter(prefix="/runs", tags=["runs"])
+router = fastapi.APIRouter(prefix="/runs", tags=["runs"])
 
 router.include_router(context_router.router)
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=fastapi.status.HTTP_201_CREATED)
 async def create_run(
     request: api_schemas.RunCreateRequest,
     service: Annotated[
-        run_service.RunService, Depends(run_dependencies.get_run_service)
+        run_service.RunService, fastapi.Depends(run_dependencies.get_run_service)
     ],
 ) -> api_schemas.RunResponse:
     """Create a new run.
@@ -56,7 +56,7 @@ async def create_run(
 async def get_run(
     run_id: str,
     service: Annotated[
-        run_service.RunService, Depends(run_dependencies.get_run_service)
+        run_service.RunService, fastapi.Depends(run_dependencies.get_run_service)
     ],
 ) -> api_schemas.RunResponse:
     """Retrieve a run by ID.
@@ -74,8 +74,8 @@ async def get_run(
     run = await service.get_run(run_id)
 
     if not run:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_404_NOT_FOUND,
             detail=f"Run with id {run_id} not found",
         )
 
