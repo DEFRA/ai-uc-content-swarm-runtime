@@ -240,42 +240,6 @@ class TestContextService:
             )
 
     @pytest.mark.asyncio
-    async def test_handle_upload_callback_with_missing_context_id_logs_warning(
-        self,
-        context_service: service.ContextService,
-        mock_repository: AsyncMock,
-        mocker: MockerFixture,
-    ) -> None:
-        """Test that handle_upload_callback logs warning when context_id not found."""
-        # Setup
-        now = datetime.now(tz=UTC)
-        run = run_models.Run(
-            id="run-123",
-            name="Test Run",
-            status=run_models.RunStatus.SETUP,
-            created_at=now,
-            updated_at=now,
-        )
-
-        mock_repository.get_run.return_value = run
-
-        payload = api_schemas.CdpUploaderStatusPayload(
-            uploadStatus="success",
-            form={},
-        )
-
-        mock_logger = mocker.patch("app.run.context.service.logger")
-
-        # Act
-        await context_service.handle_upload_callback(
-            payload, run_id="run-123", context_id=uuid.uuid4()
-        )
-
-        # Assert
-        mock_logger.warning.assert_called_once()
-        assert "No pending context found" in mock_logger.warning.call_args[0][0]
-
-    @pytest.mark.asyncio
     async def test_handle_upload_callback_with_multiple_files_processes_first(
         self,
         context_service: service.ContextService,

@@ -125,12 +125,6 @@ class ContextService:
                         created_at=pending_context.created_at,
                         description=pending_context.description,
                     )
-                    await self.repository.append_context(run_id, updated_context)
+                    await self.repository.append_context(run.id, updated_context)
 
                     return
-        else:
-            logger.warning(
-                "No pending context found for context_id %s in run %s",
-                context_id,
-                run_id,
-            )

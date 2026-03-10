@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 )
 async def initiate_context_upload(
     run_id: str,
-    request: api_schemas.ContextUploadRequest,
+    payload: api_schemas.ContextUploadRequest,
     context_service: Annotated[
         context_service_module.ContextService,
         fastapi.Depends(context_dependencies.get_context_service),
@@ -38,7 +38,7 @@ async def initiate_context_upload(
 ) -> dict:
     """Initiate a context/file upload session for a run."""
     try:
-        upload = await context_service.initiate_upload(run_id, request)
+        upload = await context_service.initiate_upload(run_id, payload)
     except run_models.RunNotFoundError as e:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_404_NOT_FOUND, detail=str(e)
