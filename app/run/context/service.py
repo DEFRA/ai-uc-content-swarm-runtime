@@ -42,7 +42,6 @@ class ContextService:
             error_message = f"Run with ID {run_id} not found"
             raise run_models.RunNotFoundError(error_message)
 
-        # Generate a unique context_id for tracking this upload session
         context_id = uuid.uuid4()
 
         async with http_client.create_async_client(
