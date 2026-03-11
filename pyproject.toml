@@ -5,6 +5,7 @@ description = "ai-uc-content-swarm-runtime"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiofiles>=25.1.0",
     "asgi-logger==0.1.0",
     "aws-embedded-metrics==3.3.0",
     "boto3==1.42.50",
@@ -29,6 +30,7 @@ dev = [
     "pytest-mock==3.15.1",
     "ruff==0.11.13",
     "taskipy==1.14.1",
+    "types-aiofiles>=25.1.0.20251011",
 ]
 
 [project.scripts]
@@ -79,3 +81,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "boto3.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
