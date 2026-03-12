@@ -85,7 +85,7 @@ class TestContextService:
         assert pending_context.filename is None
         assert pending_context.description == "Test description"
         assert pending_context.status == "pending"
-        assert pending_context.s3_bucket == "test-bucket"
+        assert pending_context.s3_bucket == "ai-uc-content-swarm-context"
         assert pending_context.s3_key is None
         assert pending_context.checksum_sha256 is None
 

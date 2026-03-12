@@ -21,7 +21,7 @@ def reset_mongo_client() -> Generator[None, None, None]:
 async def test_get_mongo_client_initialization(
     mocker: pytest_mock.MockerFixture,
 ) -> None:
-    mock_client_cls = mocker.patch("app.common.mongo.AsyncMongoClient")
+    mock_client_cls = mocker.patch("pymongo.AsyncMongoClient")
     mock_instance = mock_client_cls.return_value
 
     # Setup the async ping command
@@ -47,7 +47,7 @@ async def test_get_mongo_client_with_custom_tls(
         "app.common.tls.custom_ca_certs", {"custom-cert-key": "/path/to/cert.pem"}
     )
 
-    mock_client_cls = mocker.patch("app.common.mongo.AsyncMongoClient")
+    mock_client_cls = mocker.patch("pymongo.AsyncMongoClient")
     mock_instance = mock_client_cls.return_value
     mock_db = mocker.MagicMock()
     mock_instance.get_database.return_value = mock_db
@@ -69,7 +69,7 @@ async def test_get_mongo_client_returns_existing(
     existing_client = mocker.Mock()
     mongo.client = existing_client
 
-    mock_client_cls = mocker.patch("app.common.mongo.AsyncMongoClient")
+    mock_client_cls = mocker.patch("pymongo.AsyncMongoClient")
 
     result = await mongo.get_mongo_client()
 
@@ -87,7 +87,10 @@ async def test_get_db(mocker: pytest_mock.MockerFixture) -> None:
     # First call initializes
     result = await mongo.get_db(mock_client)
     assert result == mock_db
-    mock_client.get_database.assert_called_once_with(get_config().mongo_database)
+    # get_database is called with database name and codec_options
+    args, kwargs = mock_client.get_database.call_args
+    assert args[0] == get_config().mongo_database
+    assert "codec_options" in kwargs
 
     # Second call returns cached
     result2 = await mongo.get_db(mock_client)

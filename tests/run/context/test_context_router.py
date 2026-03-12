@@ -44,7 +44,7 @@ class TestInitiateContextUpload:
             "run-1", upload_request, context_service=mock_context_service
         )
 
-        assert res == {"upload_id": "upload-123"}
+        assert res == api_schemas.CdpUploaderInitiateResponse(uploadId="upload-123")
         mock_context_service.initiate_upload.assert_awaited_once_with(
             "run-1", upload_request
         )

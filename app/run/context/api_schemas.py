@@ -12,9 +12,15 @@ class ContextUploadRequest(pydantic.BaseModel):
 
 
 class CdpUploaderInitiateResponse(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="allow", populate_by_name=True)
+    model_config = pydantic.ConfigDict(
+        populate_by_name=True, alias_generator=pydantic.alias_generators.to_camel
+    )
 
-    upload_id: str = pydantic.Field(..., alias="uploadId")
+    upload_id: str = pydantic.Field(
+        ...,
+        alias="uploadId",
+        description="Unique identifier for the initiated upload session",
+    )
 
 
 class FileUploadDetail(pydantic.BaseModel):

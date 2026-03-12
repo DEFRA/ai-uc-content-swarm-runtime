@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post(
-    "/runs/{run_id}/contexts",
+    "/{run_id}/contexts",
     status_code=fastapi.status.HTTP_201_CREATED,
     responses={
         fastapi.status.HTTP_201_CREATED: {
@@ -35,7 +35,7 @@ async def initiate_context_upload(
         context_service_module.ContextService,
         fastapi.Depends(context_dependencies.get_context_service),
     ],
-) -> dict:
+) -> api_schemas.CdpUploaderInitiateResponse:
     """Initiate a context/file upload session for a run."""
     try:
         upload = await context_service.initiate_upload(run_id, payload)
@@ -44,11 +44,11 @@ async def initiate_context_upload(
             status_code=fastapi.status.HTTP_404_NOT_FOUND, detail=str(e)
         ) from e
 
-    return {"upload_id": upload.upload_id}
+    return api_schemas.CdpUploaderInitiateResponse(uploadId=upload.upload_id)
 
 
 @router.get(
-    "/runs/{run_id}/contexts",
+    "/{run_id}/contexts",
     status_code=fastapi.status.HTTP_200_OK,
     responses={
         fastapi.status.HTTP_200_OK: {
@@ -98,7 +98,7 @@ async def get_run_contexts(
     ]
 
 
-@router.post("/runs/{run_id}/contexts/{context_id}/callback")
+@router.post("/{run_id}/contexts/{context_id}/callback")
 async def handle_callback(
     run_id: str,
     context_id: str,

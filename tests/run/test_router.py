@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
 
 import app.run.dependencies as run_dependencies
+import app.swarm.dependencies as swarm_dependencies
 from app.entrypoints import fastapi
 from app.run import api_schemas, models, repository
 
@@ -18,14 +19,25 @@ def mock_repository(mocker: MockerFixture) -> AsyncMock:
 
 
 @pytest.fixture
-def test_client(mock_repository: AsyncMock) -> Generator[TestClient, None, None]:
-    """Create a TestClient with mocked repository dependency."""
+def test_client(
+    mock_repository: AsyncMock, mocker: MockerFixture
+) -> Generator[TestClient, None, None]:
+    """Create a TestClient with mocked repository and swarm dependencies."""
 
     def override_get_run_repository() -> repository.RunRepository:
         return mock_repository  # type: ignore[return-value]
 
+    # Mock the swarm runner to avoid boto3 client initialization
+    mock_swarm_runner = mocker.AsyncMock()
+
+    def override_get_swarm_runner():
+        return mock_swarm_runner  # type: ignore[return-value]
+
     fastapi.app.dependency_overrides[run_dependencies.get_run_repository] = (
         override_get_run_repository
+    )
+    fastapi.app.dependency_overrides[swarm_dependencies.get_swarm_runner] = (
+        override_get_swarm_runner
     )
 
     yield TestClient(fastapi.app)

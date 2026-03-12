@@ -2,20 +2,35 @@ from typing import Annotated
 
 import fastapi
 
-import app.swarm.dependencies as dependencies
-import app.swarm.runner as runner
-from app.swarm.api_schemas import RunRequest, RunResponse
+from app.swarm import api_schemas, dependencies, models, runner
+from app.swarm.context import models as context_models
 
 router = fastapi.APIRouter(prefix="/swarm", tags=["swarm"])
 
 
 @router.post("/run")
 async def run_swarm(
-    request: RunRequest,
+    request: api_schemas.RunRequest,
     runner: Annotated[
         runner.SwarmRunner, fastapi.Depends(dependencies.get_swarm_runner)
     ],
-) -> RunResponse:
-    output = await runner.start_run(request.task)
+) -> api_schemas.RunResponse:
+    config = models.RunConfig(
+        task=request.task,
+        id=request.id,
+        name=request.name,
+        context_documents=[
+            context_models.ContextDocument(
+                id=doc.id,
+                type=context_models.ContextType.POLICY,
+                name=doc.name,
+                description=doc.description,
+                path=doc.path,
+            )
+            for doc in request.context_documents
+        ],
+    )
 
-    return RunResponse(output=output)
+    output = await runner.start_run(config)
+
+    return api_schemas.RunResponse(output=output)

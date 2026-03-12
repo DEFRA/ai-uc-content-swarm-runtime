@@ -5,6 +5,7 @@ description = "ai-uc-content-swarm-runtime"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiofiles===25.1.0",
     "asgi-logger==0.1.0",
     "aws-embedded-metrics==3.3.0",
     "boto3==1.42.50",
@@ -15,6 +16,8 @@ dependencies = [
     "pydantic-ai-slim[bedrock]==1.56.0",
     "pydantic-settings==2.9.1",
     "pymongo[aws,encryption,snappy,zstd]==4.13.1",
+    "types-aiofiles==25.1.0.20251011",
+    "types-boto3[s3]==1.42.65",
     "uvicorn==0.34.3",
 ]
 
@@ -22,6 +25,7 @@ dependencies = [
 dev = [
     "debugpy==1.8.20",
     "httpx==0.28.1",
+    "moto[s3]==5.1.22",
     "mypy==1.13.0",
     "pytest==8.4.0",
     "pytest-asyncio==1.0.0",
@@ -79,3 +83,7 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "boto3.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true

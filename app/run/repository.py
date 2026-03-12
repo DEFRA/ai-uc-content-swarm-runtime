@@ -114,7 +114,7 @@ class MongoRunRepository(RunRepository):
         )
 
         for ctx_doc in doc.get("contexts", []):
-            ctx_id = uuid.UUID(bytes=ctx_doc["id"])
+            ctx_id: uuid.UUID = ctx_doc["id"]
 
             context = ContextMetadata(
                 id=ctx_id,
