@@ -46,9 +46,6 @@ async def validation_exception_handler(
     exc: fastapi.exceptions.RequestValidationError,
 ) -> fastapi.responses.JSONResponse:
     """Convert validation errors to 400 Bad Request instead of 422."""
-    print(
-        f"Validation error: {exc.errors()}"
-    )  # Log the validation errors for debugging
     return fastapi.responses.JSONResponse(
         status_code=fastapi.status.HTTP_400_BAD_REQUEST,
         content={"detail": exc.errors()},

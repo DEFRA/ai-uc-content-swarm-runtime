@@ -1,9 +1,12 @@
 import json
+import logging
 import uuid
 
 import pydantic_ai
 
 import app.swarm.models as models
+
+logger = logging.getLogger(__name__)
 
 researcher_agent = pydantic_ai.Agent(
     deps_type=models.AgentDependencies,
@@ -49,7 +52,7 @@ async def get_document_content(
     """Retrieve the content of a context document by its key."""
     run_config = ctx.deps.run_config
 
-    print(f"Getting content for document with id: {context_id}")
+    logger.info("Getting content for document with id: %s", context_id)
 
     doc = next(
         (doc for doc in run_config.context_documents if doc.id == context_id), None
@@ -59,13 +62,7 @@ async def get_document_content(
         msg = f"Document with id {context_id} not found in context documents"
         raise ValueError(msg)
 
-    content = await ctx.deps.context_repository.get_context(doc.path)
-
-    print(
-        f"Retrieved content for document {doc.name} (id: {context_id}): {content[:100]}..."
-    )
-
-    return content
+    return await ctx.deps.context_repository.get_context(doc.path)
 
 
 async def ask_researcher_agent(
@@ -76,8 +73,6 @@ async def ask_researcher_agent(
     Use this to ground the discussion in policy documents, user needs, and legislation.
     """
 
-    print(f"Asking Researcher agent with message: {message}")
-
     response = await researcher_agent.run(
         model=ctx.deps.get_model_for_agent("researcher"),
         output_type=str,
@@ -85,8 +80,6 @@ async def ask_researcher_agent(
         deps=ctx.deps,
         usage=ctx.usage,
     )
-
-    print(f"Researcher agent responded with: {response.output}")
 
     exchange = models.AgentExchange(
         agent_name="Researcher",

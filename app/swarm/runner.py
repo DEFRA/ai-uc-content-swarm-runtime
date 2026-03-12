@@ -1,8 +1,12 @@
+import logging
+
 import pydantic_ai
 
 from app.swarm import llm, models
 from app.swarm.agents import manager
 from app.swarm.context.repository import AbstractContextRepository
+
+logger = logging.getLogger(__name__)
 
 
 class SwarmRunner:
@@ -28,7 +32,7 @@ class SwarmRunner:
 
         run_usage: pydantic_ai.RunUsage = pydantic_ai.RunUsage()
 
-        print(f"Starting swarm run with config: {config}")
+        logger.info("Starting swarm run for run_id: %s", config.id)
 
         entry = await manager.manager_agent.run(
             config.task,
