@@ -61,7 +61,9 @@ async def get_document_content(
 
     content = await ctx.deps.context_repository.get_context(doc.path)
 
-    print (f"Retrieved content for document {doc.name} (id: {context_id}): {content[:100]}...")
+    print(
+        f"Retrieved content for document {doc.name} (id: {context_id}): {content[:100]}..."
+    )
 
     return content
 
