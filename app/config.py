@@ -69,6 +69,12 @@ class BedrockConfig(pydantic_settings.BaseSettings):
             raise ValueError(msg) from e
 
 
+class AgentFeatureFlags(pydantic.BaseModel):
+    researcher_enabled: bool = pydantic.Field(
+        default=True, validation_alias="RESEARCH_AGENT_ENABLED"
+    )
+
+
 class AppConfig(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict()
     python_env: str | None = None
@@ -79,7 +85,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     mongo_uri: str | None = None
     mongo_database: str = "ai-uc-content-swarm-runtime"
     mongo_truststore: str = "TRUSTSTORE_CDP_ROOT_CA"
-    localstack_endpoint_url: str | None = None
+    localstack_url: str | None = None
     http_proxy: pydantic.HttpUrl | None = None
     enable_metrics: bool = False
     tracing_header: str = "x-cdp-request-id"
@@ -91,6 +97,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     context_bucket: str = pydantic.Field(..., validation_alias="CONTEXT_BUCKET")
 
     bedrock: BedrockConfig = BedrockConfig()  # type: ignore
+    agent_feature_flags: AgentFeatureFlags = AgentFeatureFlags()  # type: ignore
 
 
 config: AppConfig | None = None

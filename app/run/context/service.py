@@ -52,7 +52,7 @@ class ContextService:
                 json={
                     "redirect": request.redirect,
                     "s3Bucket": settings.context_bucket,
-                    "s3Path": run_id,
+                    "s3Path": f"{run_id}/policy",
                     "callback": f"{settings.callback_base}/runs/{run_id}/contexts/{str(context_id)}/callback",
                     "mimeTypes": ["text/plain"],
                     "metadata": {"run_id": run_id},
@@ -109,7 +109,7 @@ class ContextService:
         pending_context = run.get_context(context_id)
 
         if pending_context:
-            # Return as soon as first file upload detail is processed since
+            # Return as soon as first file upload detail is processed
             for form_value in payload.form.values():
                 if isinstance(form_value, api_schemas.FileUploadDetail):
                     updated_context = models.ContextMetadata(
@@ -123,6 +123,7 @@ class ContextService:
                         created_at=pending_context.created_at,
                         description=pending_context.description,
                     )
+
                     await self.repository.append_context(run.id, updated_context)
 
                     return

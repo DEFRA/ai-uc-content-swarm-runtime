@@ -20,7 +20,17 @@ class FileSystem:
 class AbstractPromptRepository(ABC):
     @abstractmethod
     async def get_prompt_by_name(self, name: str) -> str:
-        pass
+        """Retrieve a prompt by name.
+
+        Args:
+            name: The name of the prompt file (e.g., "manager_prompt.txt").
+
+        Returns:
+            The content of the prompt file.
+
+        Raises:
+            PromptNotFoundError: If the prompt file cannot be found.
+        """
 
 
 class FileSystemPromptRepository(AbstractPromptRepository):

@@ -1,3 +1,6 @@
+import json
+import uuid
+
 import pydantic_ai
 
 import app.swarm.models as models
@@ -15,3 +18,79 @@ async def get_instructions(
     deps = ctx.deps
 
     return await deps.prompt_repository.get_prompt_by_name("researcher.md")
+
+
+@researcher_agent.tool
+async def list_policy_documents(
+    ctx: pydantic_ai.RunContext[models.AgentDependencies],
+) -> str:
+    """List the policy documents that the manager agent has shared for this run."""
+    policy_docs = [
+        doc
+        for doc in ctx.deps.run_config.context_documents
+        if doc.type == models.context_models.ContextType.POLICY
+    ]
+
+    if not policy_docs:
+        return "No policy documents have been shared yet."
+
+    doc_list = json.dumps(
+        [{"id": str(doc.id), "name": doc.name} for doc in policy_docs],
+        indent=2,
+    )
+
+    return f"The following policy documents are available:\n{doc_list}\n"
+
+
+@researcher_agent.tool
+async def get_document_content(
+    ctx: pydantic_ai.RunContext[models.AgentDependencies], context_id: uuid.UUID
+) -> str:
+    """Retrieve the content of a context document by its key."""
+    run_config = ctx.deps.run_config
+
+    print(f"Getting content for document with id: {context_id}")
+
+    doc = next(
+        (doc for doc in run_config.context_documents if doc.id == context_id), None
+    )
+
+    if not doc:
+        msg = f"Document with id {context_id} not found in context documents"
+        raise ValueError(msg)
+
+    content = await ctx.deps.context_repository.get_context(doc.path)
+
+    print (f"Retrieved content for document {doc.name} (id: {context_id}): {content[:100]}...")
+
+    return content
+
+
+async def ask_researcher_agent(
+    ctx: pydantic_ai.RunContext[models.AgentDependencies], message: str
+) -> str:
+    """Ask the researcher agent to analyze source material and surface evidence.
+
+    Use this to ground the discussion in policy documents, user needs, and legislation.
+    """
+
+    print(f"Asking Researcher agent with message: {message}")
+
+    response = await researcher_agent.run(
+        model=ctx.deps.get_model_for_agent("researcher"),
+        output_type=str,
+        user_prompt=message,
+        deps=ctx.deps,
+        usage=ctx.usage,
+    )
+
+    print(f"Researcher agent responded with: {response.output}")
+
+    exchange = models.AgentExchange(
+        agent_name="Researcher",
+        message=message,
+        response=response.output,
+    )
+    ctx.deps.group_chat.append(exchange)
+
+    return f"[Researcher] {response.output}"

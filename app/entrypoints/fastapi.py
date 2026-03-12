@@ -10,7 +10,6 @@ import app.common.mongo as mongo
 import app.common.tracing as tracing
 import app.config as app_config
 import app.health.router as health_router
-import app.run.context.router as context_router
 import app.run.router as run_router
 import app.swarm.router as swarm_router
 
@@ -38,7 +37,6 @@ app.add_middleware(tracing.TraceIdMiddleware)
 
 app.include_router(health_router.router)
 app.include_router(swarm_router.router)
-app.include_router(context_router.router)
 app.include_router(run_router.router)
 
 

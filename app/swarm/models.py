@@ -1,32 +1,33 @@
+"""Models for the swarm module."""
+
 from dataclasses import dataclass, field
-from enum import StrEnum
+from datetime import UTC, datetime
 
 import pydantic_ai.models
 
+from app.swarm.context import models as context_models
+from app.swarm.context import repository as context_repo
 from app.swarm.prompts import repository as prompt_repo
-
-
-class ContextType(StrEnum):
-    POLICY = "policy"
-    LEGLISLATION = "legislation"
-
-
-@dataclass
-class ContextDocument:
-    type: ContextType
-    name: str
-    content: str
 
 
 @dataclass
 class AgentExchange:
-    """A single turn in the group discussion."""
-
     agent_name: str
-    agent_role: str
-    question: str
+    message: str
     response: str
-    turn_number: int = field(default=0)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+
+@dataclass
+class RunConfig:
+    """Configuration for a swarm run."""
+
+    task: str
+    id: str
+    name: str
+    context_documents: list[context_models.ContextDocument] = field(
+        default_factory=list
+    )
 
 
 @dataclass
@@ -45,9 +46,9 @@ class ModelMapping:
     def get(self, agent_name: str) -> pydantic_ai.models.Model:
         try:
             return self._backing[agent_name]
-        except KeyError as exc:
+        except KeyError as err:
             msg = f"No LLM model mapping for agent '{agent_name}'"
-            raise KeyError(msg) from exc
+            raise KeyError(msg) from err
 
     def as_dict(self) -> dict[str, pydantic_ai.models.Model]:
         return dict(self._backing)
@@ -55,8 +56,9 @@ class ModelMapping:
 
 @dataclass
 class AgentDependencies:
+    run_config: RunConfig
+    context_repository: context_repo.AbstractContextRepository
     group_chat: list[AgentExchange] = field(default_factory=list)
-    context_documents: list[ContextDocument] = field(default_factory=list)
     prompt_repository: prompt_repo.AbstractPromptRepository = field(
         default_factory=prompt_repo.FileSystemPromptRepository
     )
@@ -68,14 +70,14 @@ class AgentDependencies:
             return ""
         lines = ["## Recent discussion:"]
         for exchange in self.group_chat:
-            lines.append(f"\n**{exchange.agent_name}** ({exchange.agent_role}):")
-            lines.append(f"Q: {exchange.question}")
+            lines.append(f"\n**{exchange.agent_name}**:")
+            lines.append(f"Q: {exchange.message}")
             lines.append(f"A: {exchange.response}")
         return "\n".join(lines)
 
     def get_model_for_agent(self, agent_name: str) -> pydantic_ai.models.Model:
         """Return the LLM model mapped to `agent_name`.
 
-        Raises KeyError if there is no mapping for the given agent.
+        Raises: KeyError if no mapping exists.
         """
         return self.llm_mapping.get(agent_name)

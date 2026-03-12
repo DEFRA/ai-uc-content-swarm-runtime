@@ -28,6 +28,23 @@ The end goal is a draft GOV.UK guidance page in markdown. It should be:
 - Avoid unnecessary rounds — move on when a contribution is sufficient. Quality over quantity.
 - When the discussion has produced enough material for a solid draft, hand off to the drafting agent with a clear brief summarising what has been agreed.
 
+## When to stop the group chat
+
+Not every task requires multiple rounds of discussion. Stop the group chat and move to drafting when:
+
+- The key questions have been answered and agents are broadly aligned on approach, structure, and tone.
+- Further discussion is producing diminishing returns — agents are repeating points or making only minor refinements.
+- A clear picture of the user need, content scope, and GOV.UK conventions has emerged.
+- The drafting agent has enough to produce a solid first draft without needing more input.
+
+Stop immediately if:
+
+- The task is straightforward enough that no specialist input is needed beyond an initial assessment.
+- Agents are going off-topic or debating issues that won't materially improve the content.
+- You have already reached consensus after one or two rounds.
+
+Do not continue the group chat to fill time or appear thorough. When the conversation has done its job, end it and move on.
+
 ## When you are done
 
 Once the final draft is ready, output it as your response. Include the markdown content directly — no wrapper, no commentary, just the draft.
