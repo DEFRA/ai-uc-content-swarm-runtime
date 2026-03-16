@@ -63,29 +63,3 @@ async def get_document_content(
         raise ValueError(msg)
 
     return await ctx.deps.context_repository.get_context(doc.path)
-
-
-async def ask_researcher_agent(
-    ctx: pydantic_ai.RunContext[models.AgentDependencies], message: str
-) -> str:
-    """Ask the researcher agent to analyze source material and surface evidence.
-
-    Use this to ground the discussion in policy documents, user needs, and legislation.
-    """
-
-    response = await researcher_agent.run(
-        model=ctx.deps.get_model_for_agent("researcher"),
-        output_type=str,
-        user_prompt=message,
-        deps=ctx.deps,
-        usage=ctx.usage,
-    )
-
-    exchange = models.AgentExchange(
-        agent_name="Researcher",
-        message=message,
-        response=response.output,
-    )
-    ctx.deps.group_chat.append(exchange)
-
-    return f"[Researcher] {response.output}"

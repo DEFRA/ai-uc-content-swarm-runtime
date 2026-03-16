@@ -73,6 +73,9 @@ class AgentFeatureFlags(pydantic.BaseModel):
     researcher_enabled: bool = pydantic.Field(
         default=True, validation_alias="RESEARCH_AGENT_ENABLED"
     )
+    writer_enabled: bool = pydantic.Field(
+        default=True, validation_alias="WRITER_AGENT_ENABLED"
+    )
 
 
 class AppConfig(pydantic_settings.BaseSettings):
@@ -95,6 +98,7 @@ class AppConfig(pydantic_settings.BaseSettings):
     )
     cdp_uploader_timeout: int = 30
     context_bucket: str = pydantic.Field(..., validation_alias="CONTEXT_BUCKET")
+    swarm_request_limit: int = 50
 
     bedrock: BedrockConfig = BedrockConfig()  # type: ignore
     agent_feature_flags: AgentFeatureFlags = AgentFeatureFlags()  # type: ignore

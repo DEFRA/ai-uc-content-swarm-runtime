@@ -2,12 +2,20 @@
 
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from enum import StrEnum
+from typing import Any
 
+import pydantic_ai
 import pydantic_ai.models
 
 from app.swarm.context import models as context_models
 from app.swarm.context import repository as context_repo
 from app.swarm.prompts import repository as prompt_repo
+
+
+class AgentName(StrEnum):
+    RESEARCHER = "researcher"
+    WRITER = "writer"
 
 
 @dataclass
@@ -16,6 +24,23 @@ class AgentExchange:
     message: str
     response: str
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
+
+
+@dataclass
+class GroupChat:
+    """Holds the active agents and the growing conversation transcript."""
+
+    agents: dict[AgentName, Any] = field(default_factory=dict)
+    transcript: list[AgentExchange] = field(default_factory=list)
+
+    def format_transcript(self) -> str:
+        """Format the transcript as readable context for agents."""
+        if not self.transcript:
+            return ""
+        lines = ["## Recent discussion:"]
+        for exchange in self.transcript:
+            lines.append(f"\n**{exchange.agent_name}**: {exchange.response}")
+        return "\n".join(lines)
 
 
 @dataclass
@@ -58,22 +83,11 @@ class ModelMapping:
 class AgentDependencies:
     run_config: RunConfig
     context_repository: context_repo.AbstractContextRepository
-    group_chat: list[AgentExchange] = field(default_factory=list)
+    group_chat: GroupChat = field(default_factory=GroupChat)
     prompt_repository: prompt_repo.AbstractPromptRepository = field(
         default_factory=prompt_repo.FileSystemPromptRepository
     )
     llm_mapping: ModelMapping = field(default_factory=ModelMapping)
-
-    def format_chat_context(self) -> str:
-        """Format the discussion as readable context for agents."""
-        if not self.group_chat:
-            return ""
-        lines = ["## Recent discussion:"]
-        for exchange in self.group_chat:
-            lines.append(f"\n**{exchange.agent_name}**:")
-            lines.append(f"Q: {exchange.message}")
-            lines.append(f"A: {exchange.response}")
-        return "\n".join(lines)
 
     def get_model_for_agent(self, agent_name: str) -> pydantic_ai.models.Model:
         """Return the LLM model mapped to `agent_name`.
