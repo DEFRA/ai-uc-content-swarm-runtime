@@ -8,6 +8,7 @@ from typing import Any
 import pydantic_ai
 import pydantic_ai.models
 
+from app.swarm.content_pages import repository as content_pages_repo
 from app.swarm.context import models as context_models
 from app.swarm.context import repository as context_repo
 from app.swarm.prompts import repository as prompt_repo
@@ -83,11 +84,13 @@ class ModelMapping:
 class AgentDependencies:
     run_config: RunConfig
     context_repository: context_repo.AbstractContextRepository
+    content_pages_repository: content_pages_repo.AbstractContentPagesRepository
     group_chat: GroupChat = field(default_factory=GroupChat)
     prompt_repository: prompt_repo.AbstractPromptRepository = field(
         default_factory=prompt_repo.FileSystemPromptRepository
     )
     llm_mapping: ModelMapping = field(default_factory=ModelMapping)
+    content_pages: dict[str, str] = field(default_factory=dict)
 
     def get_model_for_agent(self, agent_name: str) -> pydantic_ai.models.Model:
         """Return the LLM model mapped to `agent_name`.

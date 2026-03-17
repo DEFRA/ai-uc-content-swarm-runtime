@@ -5,6 +5,7 @@ import pydantic_ai
 from app import config
 from app.swarm import llm, models
 from app.swarm.agents import manager, researcher, writer
+from app.swarm.content_pages.repository import AbstractContentPagesRepository
 from app.swarm.context.repository import AbstractContextRepository
 
 logger = logging.getLogger(__name__)
@@ -13,13 +14,19 @@ settings = config.get_config()
 
 
 class SwarmRunner:
-    def __init__(self, context_repository: AbstractContextRepository) -> None:
+    def __init__(
+        self,
+        context_repository: AbstractContextRepository,
+        content_pages_repository: AbstractContentPagesRepository,
+    ) -> None:
         """Initialize SwarmRunner with a context repository.
 
         Args:
             context_repository: Repository for loading context documents.
+            content_pages_repository: Repository for persisting content pages.
         """
         self.context_repository = context_repository
+        self.content_pages_repository = content_pages_repository
 
     async def start_run(self, config: models.RunConfig) -> str:
         """Starts a new swarm run with the given configuration."""
@@ -38,6 +45,7 @@ class SwarmRunner:
             run_config=config,
             context_repository=self.context_repository,
             group_chat=models.GroupChat(agents=active_agents),
+            content_pages_repository=self.content_pages_repository,
         )
 
         llm_mapping = run_dependencies.llm_mapping
@@ -54,7 +62,7 @@ class SwarmRunner:
         logger.info("Starting swarm run for run_id: %s", config.id)
 
         entry = await manager.manager_agent.run(
-            config.task,
+            "start",
             model=run_dependencies.get_model_for_agent("manager"),
             usage=run_usage,
             usage_limits=pydantic_ai.UsageLimits(
@@ -62,5 +70,7 @@ class SwarmRunner:
             ),
             deps=run_dependencies,
         )
+
+        logger.info("Run completed for run_id: %s", config.id)
 
         return entry.output
