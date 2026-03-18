@@ -55,7 +55,7 @@ class SwarmRunner:
             llm_mapping.append(models.AgentName.RESEARCHER, llm.claude_haiku)
 
         if settings.agent_feature_flags.writer_enabled:
-            llm_mapping.append(models.AgentName.WRITER, llm.claude_haiku)
+            llm_mapping.append(models.AgentName.WRITER, llm.claude_sonnet)
 
         run_usage: pydantic_ai.RunUsage = pydantic_ai.RunUsage()
 

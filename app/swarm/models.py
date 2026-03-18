@@ -6,6 +6,7 @@ from enum import StrEnum
 from typing import Any
 
 import pydantic_ai
+import pydantic_ai.messages
 import pydantic_ai.models
 
 from app.swarm.content_pages import repository as content_pages_repo
@@ -91,6 +92,9 @@ class AgentDependencies:
     )
     llm_mapping: ModelMapping = field(default_factory=ModelMapping)
     content_pages: dict[str, str] = field(default_factory=dict)
+    context_history: dict[str, list[pydantic_ai.messages.ModelMessage]] = field(
+        default_factory=dict
+    )
 
     def get_model_for_agent(self, agent_name: str) -> pydantic_ai.models.Model:
         """Return the LLM model mapped to `agent_name`.

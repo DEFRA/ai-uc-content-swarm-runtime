@@ -50,4 +50,4 @@ Stop immediately if:
 
 ## When you are done
 
-Once the writer has produced the main content page (key `main`) and there are no outstanding `@mentions` in their response, output the page content directly as your response. Include the markdown content directly — no wrapper, no commentary, just the page.
+Once the writer has produced the main content page (key `main`) and there are no outstanding `@mentions` in their response, the task is complete. You can then stop the group chat. Your output should just **ONLY** be a message to say the task is complete and the content page is ready for review. **DO NOT** include any of the content produced by the agents in your final message.

@@ -1,8 +1,11 @@
+import logging
 import re
 
 import pydantic_ai
 
 import app.swarm.models as models
+
+logger = logging.getLogger(__name__)
 
 manager_agent = pydantic_ai.Agent(
     deps_type=models.AgentDependencies,
@@ -14,6 +17,7 @@ manager_agent = pydantic_ai.Agent(
 async def get_instructions(
     ctx: pydantic_ai.RunContext[models.AgentDependencies],
 ) -> str:
+    logger.info("[Tool Call] Manager agent: get_instructions called")
     deps = ctx.deps
 
     return await deps.prompt_repository.get_prompt_by_name("manager.md")
@@ -31,6 +35,8 @@ async def dispatch(
         agent_name: The agent to dispatch the task to.
         task: The task or question for the agent.
     """
+    logger.info("[Tool Call] Manager agent: dispatch called")
+
     group_chat = ctx.deps.group_chat
 
     if agent_name not in group_chat.agents:
@@ -51,7 +57,10 @@ async def dispatch(
         user_prompt=prompt,
         deps=ctx.deps,
         usage=ctx.usage,
+        message_history=ctx.deps.context_history.get(agent_name.value, []),
     )
+
+    ctx.deps.context_history[agent_name.value] = response.all_messages()
 
     group_chat.transcript.append(
         models.AgentExchange(
