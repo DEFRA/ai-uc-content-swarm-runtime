@@ -76,6 +76,9 @@ class AgentFeatureFlags(pydantic.BaseModel):
     writer_enabled: bool = pydantic.Field(
         default=True, validation_alias="WRITER_AGENT_ENABLED"
     )
+    critic_enabled: bool = pydantic.Field(
+        default=True, validation_alias="CRITIC_AGENT_ENABLED"
+    )
 
 
 class AppConfig(pydantic_settings.BaseSettings):

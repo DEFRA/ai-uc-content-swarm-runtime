@@ -48,6 +48,17 @@ Stop immediately if:
 - Agents are going off-topic or debating issues that won't materially improve the content.
 - The conversation is going in circles without producing new insights or progress.
 
+## Quality review with the critic
+
+Once the writer has produced the main content page (key `main`), dispatch the critic to review it. The critic will either:
+
+- **Request changes**: they will end their response with `@writer` and a numbered list of required changes. Dispatch the writer with those specific change requests, then dispatch the critic again to verify the updated content.
+- **Approve**: they will issue an explicit approval statement. When you see this, the task is complete.
+
+Repeat the writer–critic cycle until the critic approves. Do not bypass the critic or declare the task complete without their explicit approval.
+
+If the critic mentions `@manager` and requests additional research, dispatch the researcher to address the gap, then resume with the writer and critic.
+
 ## When you are done
 
-Once the writer has produced the main content page (key `main`) and there are no outstanding `@mentions` in their response, the task is complete. You can then stop the group chat. Your output should just **ONLY** be a message to say the task is complete and the content page is ready for review. **DO NOT** include any of the content produced by the agents in your final message.
+Once the critic has issued an explicit approval, the task is complete. You can then stop the group chat. Your output should just **ONLY** be a message to say the task is complete and the content page is ready for review. **DO NOT** include any of the content produced by the agents in your final message.

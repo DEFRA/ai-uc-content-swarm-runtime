@@ -18,6 +18,7 @@ from app.swarm.prompts import repository as prompt_repo
 class AgentName(StrEnum):
     RESEARCHER = "researcher"
     WRITER = "writer"
+    CRITIC = "critic"
 
 
 @dataclass
