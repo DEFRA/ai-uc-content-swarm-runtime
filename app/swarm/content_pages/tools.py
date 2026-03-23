@@ -1,30 +1,36 @@
 import json
+import logging
+
+import pydantic_ai
 
 import app.swarm.models as models
 
+logger = logging.getLogger(__name__)
 
-def read_page(deps: models.AgentDependencies, page_key: str) -> str:
-    """Read the current content of an existing content page.
+content_pages_toolset: pydantic_ai.FunctionToolset[models.AgentDependencies] = (
+    pydantic_ai.FunctionToolset()
+)
+
+
+@content_pages_toolset.tool
+async def list_pages(ctx: pydantic_ai.RunContext[models.AgentDependencies]) -> str:
+    """List the keys of all content pages available for review."""
+    logger.info("[Tool Call] ContentPagesToolset: list_pages called")
+    if not ctx.deps.content_pages:
+        return "No content pages have been created yet."
+    return json.dumps(list(ctx.deps.content_pages.keys()), indent=2)
+
+
+@content_pages_toolset.tool
+async def read_page(
+    ctx: pydantic_ai.RunContext[models.AgentDependencies], page_key: str
+) -> str:
+    """Read the current content of a content page for review.
 
     Args:
-        deps: Agent dependencies carrying the shared content page store.
         page_key: The key of the page to read (e.g. 'main', 'sub/related').
-
-    Returns the markdown content, or an error message if the page does not exist.
     """
-    if page_key not in deps.content_pages:
-        existing = list(deps.content_pages.keys())
-        return f"Page '{page_key}' not found. Existing pages: {existing}"
-
-    return deps.content_pages[page_key]
-
-
-def list_pages(deps: models.AgentDependencies) -> str:
-    """List the keys of all content pages created so far in this run.
-
-    Returns a JSON array of page keys, or a message if no pages exist yet.
-    """
-    if not deps.content_pages:
-        return "No content pages have been created yet."
-
-    return json.dumps(list(deps.content_pages.keys()), indent=2)
+    logger.info("[Tool Call] ContentPagesToolset: read_page called")
+    if page_key not in ctx.deps.content_pages:
+        return f"Page '{page_key}' not found. Existing pages: {list(ctx.deps.content_pages.keys())}"
+    return ctx.deps.content_pages[page_key]

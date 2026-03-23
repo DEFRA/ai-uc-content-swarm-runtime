@@ -1,5 +1,6 @@
 import json
 
+import pydantic_ai
 import pytest
 
 import app.swarm.content_pages.tools as content_page_tools
@@ -18,48 +19,68 @@ def deps(mocker):
     )
 
 
-def test_read_page_returns_content(deps):
+@pytest.fixture
+def run_context(deps, mocker):
+    """Create a RunContext with mocked model and usage."""
+    model = mocker.MagicMock()
+    usage = mocker.MagicMock()
+    return pydantic_ai.RunContext(deps=deps, model=model, usage=usage)
+
+
+@pytest.mark.asyncio
+async def test_read_page_returns_content(deps, run_context):
     deps.content_pages["main"] = "# Hello\n\nContent."
-    assert content_page_tools.read_page(deps, "main") == "# Hello\n\nContent."
+    assert (
+        await content_page_tools.read_page(run_context, "main") == "# Hello\n\nContent."
+    )
 
 
-def test_read_sub_page_returns_content(deps):
+@pytest.mark.asyncio
+async def test_read_sub_page_returns_content(deps, run_context):
     deps.content_pages["sub/glossary"] = "Glossary content"
-    assert content_page_tools.read_page(deps, "sub/glossary") == "Glossary content"
+    assert (
+        await content_page_tools.read_page(run_context, "sub/glossary")
+        == "Glossary content"
+    )
 
 
-def test_read_missing_page_returns_error(deps):
-    result = content_page_tools.read_page(deps, "main")
+@pytest.mark.asyncio
+async def test_read_missing_page_returns_error(run_context):
+    result = await content_page_tools.read_page(run_context, "main")
     assert "not found" in result
     assert "Existing pages: []" in result
 
 
-def test_read_missing_page_lists_existing(deps):
+@pytest.mark.asyncio
+async def test_read_missing_page_lists_existing(deps, run_context):
     deps.content_pages["main"] = "Main"
     deps.content_pages["sub/faq"] = "FAQ"
-    result = content_page_tools.read_page(deps, "missing")
+    result = await content_page_tools.read_page(run_context, "missing")
     assert "main" in result
     assert "sub/faq" in result
 
 
-def test_list_pages_returns_json_array(deps):
+@pytest.mark.asyncio
+async def test_list_pages_returns_json_array(deps, run_context):
     deps.content_pages["main"] = "Main"
-    result = content_page_tools.list_pages(deps)
+    result = await content_page_tools.list_pages(run_context)
     pages = json.loads(result)
     assert pages == ["main"]
 
 
-def test_list_pages_includes_sub_pages(deps):
+@pytest.mark.asyncio
+async def test_list_pages_includes_sub_pages(deps, run_context):
     deps.content_pages["main"] = "Main"
     deps.content_pages["sub/related"] = "Related"
-    result = content_page_tools.list_pages(deps)
+    result = await content_page_tools.list_pages(run_context)
     pages = json.loads(result)
     assert "main" in pages
     assert "sub/related" in pages
 
 
-def test_list_pages_empty_store(deps):
-    result = content_page_tools.list_pages(deps)
+@pytest.mark.asyncio
+async def test_list_pages_empty_store(run_context):
+    result = await content_page_tools.list_pages(run_context)
     assert "No content pages have been created yet" in result
 
 

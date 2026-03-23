@@ -1,7 +1,6 @@
 import logging
 
 import pydantic_ai
-from pydantic_ai import FunctionToolset
 
 import app.swarm.models as models
 
@@ -10,7 +9,9 @@ logger = logging.getLogger(__name__)
 _STYLE_GUIDE_IDX = "content-style-guide/index.json"
 _CONTENT_GUIDANCE_IDX = "content-guidance/index.json"
 
-context_documents_toolset: FunctionToolset[models.AgentDependencies] = FunctionToolset()
+context_documents_toolset: pydantic_ai.FunctionToolset[models.AgentDependencies] = (
+    pydantic_ai.FunctionToolset()
+)
 
 
 @context_documents_toolset.tool

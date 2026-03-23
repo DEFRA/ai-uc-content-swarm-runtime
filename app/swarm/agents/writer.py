@@ -2,16 +2,19 @@ import logging
 
 import pydantic_ai
 
+import app.swarm.content_pages.tools as content_pages_tools
+import app.swarm.context.tools as context_tools
 import app.swarm.models as models
-from app.swarm.toolsets.content_pages import content_pages_toolset
-from app.swarm.toolsets.context_documents import context_documents_toolset
 
 logger = logging.getLogger(__name__)
 
 writer_agent = pydantic_ai.Agent(
     deps_type=models.AgentDependencies,
     output_type=str,
-    toolsets=[content_pages_toolset, context_documents_toolset],
+    toolsets=[
+        content_pages_tools.content_pages_toolset,
+        context_tools.context_documents_toolset,
+    ],
 )
 
 
