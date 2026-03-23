@@ -12,37 +12,30 @@ def _setup_model(
     model_config: config.BedrockModelConfig,
 ) -> bedrock_models.BedrockConverseModel:
     """Create a BedrockConverseModel from configuration."""
-    guardrails = model_config.guardrails
 
-    settings = (
-        bedrock_models.BedrockModelSettings(
-            bedrock_guardrail_config={
-                "guardrailIdentifier": guardrails.id,
-                "guardrailVersion": guardrails.version,
-                "trace": "enabled",
-            }
-        )
-        if guardrails
-        else None
-    )
+    def build_settings() -> bedrock_models.BedrockModelSettings:
+        if model_config.guardrails:
+            return bedrock_models.BedrockModelSettings(
+                bedrock_inference_profile=model_config.inference_profile,
+                bedrock_guardrail_config={
+                    "guardrailIdentifier": model_config.guardrails.id,
+                    "guardrailVersion": model_config.guardrails.version,
+                    "trace": "enabled",
+                },
+            )
 
-    if guardrails:
-        settings = bedrock_models.BedrockModelSettings(
-            bedrock_guardrail_config={
-                "guardrailIdentifier": guardrails.id,
-                "guardrailVersion": guardrails.version,
-                "trace": "enabled",
-            }
+        return bedrock_models.BedrockModelSettings(
+            bedrock_inference_profile=model_config.inference_profile,
         )
+
+    model_name = model_config.model_id
 
     return bedrock_models.BedrockConverseModel(
-        model_config.inference_profile,
+        model_name,
         provider=provider,
-        profile=provider.model_profile(model_config.model_id),
-        settings=settings,
+        settings=build_settings(),
     )
 
 
 claude_haiku = _setup_model(settings.bedrock.claude_haiku)
-
 claude_sonnet = _setup_model(settings.bedrock.claude_sonnet)

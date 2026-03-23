@@ -4,7 +4,7 @@ import pydantic_ai
 
 from app import config
 from app.swarm import llm, models
-from app.swarm.agents import manager, researcher, writer
+from app.swarm.agents import critic, manager, researcher, writer
 from app.swarm.content_pages.repository import AbstractContentPagesRepository
 from app.swarm.context.repository import AbstractContextRepository
 
@@ -41,6 +41,9 @@ class SwarmRunner:
         if settings.agent_feature_flags.writer_enabled:
             active_agents[models.AgentName.WRITER] = writer.writer_agent
 
+        if settings.agent_feature_flags.critic_enabled:
+            active_agents[models.AgentName.CRITIC] = critic.critic_agent
+
         run_dependencies = models.AgentDependencies(
             run_config=config,
             context_repository=self.context_repository,
@@ -56,6 +59,9 @@ class SwarmRunner:
 
         if settings.agent_feature_flags.writer_enabled:
             llm_mapping.append(models.AgentName.WRITER, llm.claude_sonnet)
+
+        if settings.agent_feature_flags.critic_enabled:
+            llm_mapping.append(models.AgentName.CRITIC, llm.claude_sonnet)
 
         run_usage: pydantic_ai.RunUsage = pydantic_ai.RunUsage()
 

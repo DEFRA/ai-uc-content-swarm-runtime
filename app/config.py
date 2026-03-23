@@ -69,12 +69,15 @@ class BedrockConfig(pydantic_settings.BaseSettings):
             raise ValueError(msg) from e
 
 
-class AgentFeatureFlags(pydantic.BaseModel):
+class AgentFeatureFlags(pydantic_settings.BaseSettings):
     researcher_enabled: bool = pydantic.Field(
         default=True, validation_alias="RESEARCH_AGENT_ENABLED"
     )
     writer_enabled: bool = pydantic.Field(
         default=True, validation_alias="WRITER_AGENT_ENABLED"
+    )
+    critic_enabled: bool = pydantic.Field(
+        default=True, validation_alias="CRITIC_AGENT_ENABLED"
     )
 
 
