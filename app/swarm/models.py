@@ -1,5 +1,6 @@
 """Models for the swarm module."""
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -19,6 +20,33 @@ class AgentName(StrEnum):
     RESEARCHER = "researcher"
     WRITER = "writer"
     CRITIC = "critic"
+
+
+@dataclass
+class SwarmJob:
+    run_id: str
+    task: str
+    name: str
+    context_documents: list[dict]
+
+    @classmethod
+    def from_message_body(cls, body: str) -> "SwarmJob":
+        """Deserialize a job from an SQS message body.
+
+        Args:
+            body: The JSON message body from SQS.
+
+        Returns:
+            A SwarmJob instance.
+        """
+        data = json.loads(body)
+
+        return cls(
+            run_id=data["run_id"],
+            task=data["task"],
+            name=data["name"],
+            context_documents=data.get("context_documents", []),
+        )
 
 
 @dataclass

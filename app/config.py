@@ -25,7 +25,7 @@ class BedrockModelConfig(pydantic.BaseModel):
 
 
 class BedrockConfig(pydantic_settings.BaseSettings):
-    model_config = pydantic_settings.SettingsConfigDict()
+    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
     claude_haiku: Annotated[BedrockModelConfig, pydantic_settings.NoDecode] = (
         pydantic.Field(..., validation_alias="CLAUDE_HAIKU_MODEL_CONFIG")
     )
@@ -70,6 +70,7 @@ class BedrockConfig(pydantic_settings.BaseSettings):
 
 
 class AgentFeatureFlags(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
     researcher_enabled: bool = pydantic.Field(
         default=True, validation_alias="RESEARCH_AGENT_ENABLED"
     )
@@ -81,8 +82,26 @@ class AgentFeatureFlags(pydantic_settings.BaseSettings):
     )
 
 
+class SQSConfig(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
+    endpoint_url: str | None = pydantic.Field(default=None, alias="SQS_ENDPOINT")
+
+
+class SwarmInvokeQueueConfig(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
+    url: str = pydantic.Field(..., alias="SWARM_INVOKE_QUEUE_URL")
+    batch_size: int = pydantic.Field(default=10, alias="SWARM_INVOKE_QUEUE_BATCH_SIZE")
+    wait_time: int = pydantic.Field(default=20, alias="SWARM_INVOKE_QUEUE_WAIT_TIME")
+    visibility_timeout: int = pydantic.Field(
+        default=60, alias="SWARM_INVOKE_QUEUE_VISIBILITY_TIMEOUT"
+    )
+    polling_interval: int = pydantic.Field(
+        default=5, alias="SWARM_INVOKE_QUEUE_POLLING_INTERVAL"
+    )
+
+
 class AppConfig(pydantic_settings.BaseSettings):
-    model_config = pydantic_settings.SettingsConfigDict()
+    model_config = pydantic_settings.SettingsConfigDict(env_file=".env", extra="ignore")
     python_env: str | None = None
     host: str = "127.0.0.1"
     port: int = 8086
@@ -102,7 +121,8 @@ class AppConfig(pydantic_settings.BaseSettings):
     cdp_uploader_timeout: int = 30
     context_bucket: str = pydantic.Field(..., validation_alias="CONTEXT_BUCKET")
     swarm_request_limit: int = 50
-
+    sqs: SQSConfig = SQSConfig()  # type: ignore
+    swarm_invoke_queue: SwarmInvokeQueueConfig = SwarmInvokeQueueConfig()  # type: ignore
     bedrock: BedrockConfig = BedrockConfig()  # type: ignore
     agent_feature_flags: AgentFeatureFlags = AgentFeatureFlags()  # type: ignore
 

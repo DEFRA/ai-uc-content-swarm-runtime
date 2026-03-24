@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
+from typing import Any
 
 from app.run.context.models import ContextMetadata
 
@@ -23,6 +24,8 @@ class Run:
     id: str
     name: str
     status: RunStatus = RunStatus.SETUP
+    task: str | None = None
+    result: str | None = None
     created_at: datetime = datetime.now(tz=UTC)
     updated_at: datetime = datetime.now(tz=UTC)
     _contexts: list[ContextMetadata] = field(default_factory=list)
@@ -54,6 +57,22 @@ class Run:
             return self._contexts[idx]
 
         return None
+
+    def to_document(self) -> dict[str, Any]:
+        """Serialize the Run to a MongoDB document.
+
+        Returns:
+            A dictionary suitable for MongoDB insertion, excluding internal fields.
+        """
+        return {
+            "name": self.name,
+            "task": self.task,
+            "status": self.status.value,
+            "result": self.result,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "contexts": [],
+        }
 
 
 class RunNotFoundError(Exception):

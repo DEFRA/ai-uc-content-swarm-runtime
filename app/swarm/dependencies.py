@@ -1,7 +1,8 @@
 import boto3
+import types_boto3_sqs
 
 from app import config
-from app.swarm import runner
+from app.swarm import runner, sqs
 from app.swarm.content_pages import repository as content_pages_repo
 from app.swarm.context import repository as context_repo
 
@@ -10,6 +11,16 @@ def get_swarm_runner() -> runner.SwarmRunner:
     return runner.SwarmRunner(
         context_repository=get_s3_context_repository(),
         content_pages_repository=get_s3_content_pages_repository(),
+    )
+
+
+def get_sqs_client() -> types_boto3_sqs.SQSClient:
+    app_config = config.get_config()
+
+    return boto3.client(
+        "sqs",
+        region_name=app_config.aws_region,
+        endpoint_url=app_config.sqs.endpoint_url,
     )
 
 
@@ -50,4 +61,46 @@ def get_s3_content_pages_repository() -> content_pages_repo.S3ContentPagesReposi
     return content_pages_repo.S3ContentPagesRepository(
         s3_client=s3_client,
         bucket=app_config.context_bucket,
+    )
+
+
+def get_swarm_job_handler(
+    run_result_handler: runner.RunResultHandler,
+    swarm_runner_instance: runner.SwarmRunner | None = None,
+) -> runner.SwarmJobHandler:
+    """Provide a SwarmJobHandler instance.
+
+    Args:
+        run_result_handler: Handler for storing results (satisfies RunResultHandler protocol).
+        swarm_runner_instance: Optional SwarmRunner (for testing).
+
+    Returns:
+        A SwarmJobHandler instance.
+    """
+    if swarm_runner_instance is None:
+        swarm_runner_instance = get_swarm_runner()
+
+    return runner.SwarmJobHandler(
+        swarm_runner_instance=swarm_runner_instance,
+        run_result_handler=run_result_handler,
+    )
+
+
+def get_sqs_listener(
+    run_result_handler: runner.RunResultHandler,
+) -> sqs.SqsListener:
+    """Provide an SqsListener instance.
+
+    Args:
+        run_result_handler: Handler for storing results (satisfies RunResultHandler protocol).
+
+    Returns:
+        An SqsListener configured with the queue URL and job handler.
+    """
+    app_config = config.get_config()
+
+    return sqs.SqsListener(
+        swarm_invoke_queue=app_config.swarm_invoke_queue,
+        sqs_client=get_sqs_client(),
+        job_handler=get_swarm_job_handler(run_result_handler),
     )

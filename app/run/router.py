@@ -36,6 +36,7 @@ async def create_run(
     run = models.Run(
         id=str(uuid.uuid4()),
         name=request.name,
+        task=request.task,
         status=models.RunStatus.SETUP,
         created_at=now,
         updated_at=now,
@@ -46,7 +47,9 @@ async def create_run(
     return api_schemas.RunResponse(
         id=run.id,
         name=run.name,
+        task=run.task,
         status=run.status,
+        result=run.result,
         created_at=run.created_at,
         updated_at=run.updated_at,
     )
@@ -82,7 +85,56 @@ async def get_run(
     return api_schemas.RunResponse(
         id=run.id,
         name=run.name,
+        task=run.task,
         status=run.status,
+        result=run.result,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )
+
+
+@router.post("/{run_id}/start", status_code=fastapi.status.HTTP_202_ACCEPTED)
+async def start_run(
+    run_id: str,
+    request: api_schemas.RunStartRequest,
+    service: Annotated[
+        run_service.RunService, fastapi.Depends(run_dependencies.get_run_service)
+    ],
+) -> api_schemas.RunResponse:
+    """Start a run by publishing a job to the SQS queue.
+
+    Updates the run status to PENDING and publishes the job to the swarm queue.
+
+    Args:
+        run_id: The ID of the run to start.
+        request: The start request with optional task override.
+        service: The RunService instance (injected).
+
+    Returns:
+        The updated Run record with status=PENDING.
+
+    Raises:
+        HTTPException: 404 if the run is not found, 400 if no task is defined.
+    """
+    try:
+        run = await service.start_run(run_id, request.task)
+    except models.RunNotFoundError:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_404_NOT_FOUND,
+            detail=f"Run with id {run_id} not found",
+        ) from None
+    except ValueError as e:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from None
+
+    return api_schemas.RunResponse(
+        id=run.id,
+        name=run.name,
+        task=run.task,
+        status=run.status,
+        result=run.result,
         created_at=run.created_at,
         updated_at=run.updated_at,
     )

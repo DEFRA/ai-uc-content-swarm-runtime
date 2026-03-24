@@ -36,7 +36,7 @@ class AbstractContextRepository(ABC):
 class S3ContextRepository(AbstractContextRepository):
     """S3-backed repository for context documents.
 
-    Uses an injected boto3 S3 client with a ThreadPoolExecutor for non-blocking
+    Uses an injected boto3 S3 client with asyncio.to_thread() for non-blocking
     access from asyncio code.
     """
 

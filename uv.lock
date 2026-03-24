@@ -31,7 +31,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pymongo", extra = ["aws", "encryption", "snappy", "zstd"] },
     { name = "types-aiofiles" },
-    { name = "types-boto3", extra = ["s3"] },
+    { name = "types-boto3", extra = ["s3", "sqs"] },
     { name = "uvicorn" },
 ]
 
@@ -64,7 +64,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = "==2.9.1" },
     { name = "pymongo", extras = ["aws", "encryption", "snappy", "zstd"], specifier = "==4.13.1" },
     { name = "types-aiofiles", specifier = "==25.1.0.20251011" },
-    { name = "types-boto3", extras = ["s3"], specifier = "==1.42.65" },
+    { name = "types-boto3", extras = ["s3", "sqs"], specifier = "==1.42.65" },
     { name = "uvicorn", specifier = "==0.42.0" },
 ]
 
@@ -72,7 +72,7 @@ requires-dist = [
 dev = [
     { name = "debugpy", specifier = "==1.8.20" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "moto", extras = ["s3"], specifier = "==5.1.22" },
+    { name = "moto", extras = ["s3", "sqs"], specifier = "==5.1.22" },
     { name = "mypy", specifier = "==1.13.0" },
     { name = "pydantic-ai", specifier = "==1.70.0" },
     { name = "pytest", specifier = "==8.4.0" },
@@ -1043,6 +1043,7 @@ wheels = [
 name = "griffelib"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/06/eccbd311c9e2b3ca45dbc063b93134c57a1ccc7607c5e545264ad092c4a9/griffelib-2.0.0.tar.gz", hash = "sha256:e504d637a089f5cab9b5daf18f7645970509bf4f53eda8d79ed71cce8bd97934", size = 166312, upload-time = "2026-03-23T21:06:55.954Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4d/51/c936033e16d12b627ea334aaaaf42229c37620d0f15593456ab69ab48161/griffelib-2.0.0-py3-none-any.whl", hash = "sha256:01284878c966508b6d6f1dbff9b6fa607bc062d8261c5c7253cb285b06422a7f", size = 142004, upload-time = "2026-02-09T19:09:40.561Z" },
 ]
@@ -3071,6 +3072,9 @@ wheels = [
 s3 = [
     { name = "types-boto3-s3" },
 ]
+sqs = [
+    { name = "types-boto3-sqs" },
+]
 
 [[package]]
 name = "types-boto3-s3"
@@ -3079,6 +3083,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/4c/53/7b180219c8e82a784175f3debe196ea0f6f51e34fca05e3df0c2d5984f6d/types_boto3_s3-1.42.37.tar.gz", hash = "sha256:4c778245108ef5eb9d6871d5971836b2d699b603e2402e5e6ef03247463d57e1", size = 76159, upload-time = "2026-01-28T20:51:42.688Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/90/a9/ac43cd08406329e6802ca6b7cf55017ad9a9d0b7463ec2609e96510928f6/types_boto3_s3-1.42.37-py3-none-any.whl", hash = "sha256:6e31e153c9adebd0c8764006928a71891b25b0eebe7d112cb6222652ecccdf52", size = 83259, upload-time = "2026-01-28T20:51:39.682Z" },
+]
+
+[[package]]
+name = "types-boto3-sqs"
+version = "1.42.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/76/54/94fd263aedb90113ab95d05c54958b9a71a5c4dd46b7d4faa0f3b7794df0/types_boto3_sqs-1.42.3.tar.gz", hash = "sha256:b7df81d6f1cc94ac9d59ee8ddafb21b1c4e9c1140960156c55e19b1cdc3358e3", size = 23134, upload-time = "2025-12-04T21:12:55.84Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/fa/65a1e627791fe5408a1551bacc081b4e49f7fac87053dd1549957b5edd8d/types_boto3_sqs-1.42.3-py3-none-any.whl", hash = "sha256:9290509e99f22464d39cba39feb8034b295ca312a84e43f8c7ad9b511c488e40", size = 33300, upload-time = "2025-12-04T21:12:54.202Z" },
 ]
 
 [[package]]
