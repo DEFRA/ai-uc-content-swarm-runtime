@@ -65,7 +65,7 @@ class SwarmRunner:
             llm_mapping.append(models.AgentName.WRITER, llm.claude_sonnet)
 
         if settings.agent_feature_flags.critic_enabled:
-            llm_mapping.append(models.AgentName.CRITIC, llm.claude_sonnet)
+            llm_mapping.append(models.AgentName.CRITIC, llm.claude_haiku)
 
         run_usage: pydantic_ai.RunUsage = pydantic_ai.RunUsage()
 
@@ -80,6 +80,8 @@ class SwarmRunner:
             ),
             deps=run_dependencies,
         )
+
+        print(run_usage)
 
         logger.info("Run completed for run_id: %s", config.id)
 

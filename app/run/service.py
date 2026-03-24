@@ -41,7 +41,7 @@ class RunService:
 
         return run
 
-    async def start_run(self, run_id: str, task: str | None = None) -> models.Run:
+    async def start_run(self, run_id: str) -> models.Run:
         """Start a run by publishing a job to the SQS queue.
 
         Updates the run status to PENDING and publishes to the queue. The task
@@ -63,14 +63,7 @@ class RunService:
             msg = f"Run with ID {run_id} not found"
             raise models.RunNotFoundError(msg)
 
-        task_to_use = task if task is not None else run.task
-        if not task_to_use:
-            msg = f"Run {run_id} has no task defined"
-            raise ValueError(msg)
-
-        if task and task != run.task:
-            run.task = task
-
+        run.task = 'generate_content'
         run.status = models.RunStatus.PENDING
         run.updated_at = datetime.now(tz=UTC)
 
@@ -86,7 +79,7 @@ class RunService:
 
         job = sqs_adapter.SwarmRunJob(
             run_id=run.id,
-            task=task_to_use,
+            task=run.task,
             name=run.name,
             context_documents=context_documents,
         )

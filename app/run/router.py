@@ -96,7 +96,6 @@ async def get_run(
 @router.post("/{run_id}/start", status_code=fastapi.status.HTTP_202_ACCEPTED)
 async def start_run(
     run_id: str,
-    request: api_schemas.RunStartRequest,
     service: Annotated[
         run_service.RunService, fastapi.Depends(run_dependencies.get_run_service)
     ],
@@ -107,26 +106,20 @@ async def start_run(
 
     Args:
         run_id: The ID of the run to start.
-        request: The start request with optional task override.
         service: The RunService instance (injected).
 
     Returns:
         The updated Run record with status=PENDING.
 
     Raises:
-        HTTPException: 404 if the run is not found, 400 if no task is defined.
+        HTTPException: 404 if the run is not found.
     """
     try:
-        run = await service.start_run(run_id, request.task)
+        run = await service.start_run(run_id)
     except models.RunNotFoundError:
         raise fastapi.HTTPException(
             status_code=fastapi.status.HTTP_404_NOT_FOUND,
             detail=f"Run with id {run_id} not found",
-        ) from None
-    except ValueError as e:
-        raise fastapi.HTTPException(
-            status_code=fastapi.status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
         ) from None
 
     return api_schemas.RunResponse(

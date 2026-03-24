@@ -54,7 +54,6 @@ class ContextService:
                     "s3Bucket": settings.context_bucket,
                     "s3Path": f"{run_id}/policy",
                     "callback": f"{settings.callback_base}/runs/{run_id}/contexts/{str(context_id)}/callback",
-                    "mimeTypes": ["text/plain"],
                     "metadata": {"run_id": run_id},
                 },
             )

@@ -33,4 +33,4 @@ create_queue() {
 
 aws --endpoint-url=http://localhost:4566 s3 mb s3://ai-uc-content-swarm-context
 
-create_queue "ai_content_swarm_invoke" 60
+create_queue "ai_content_swarm_invoke" 300
