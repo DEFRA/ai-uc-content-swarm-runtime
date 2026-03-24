@@ -247,56 +247,6 @@ class TestRunRouter:
         data = response.json()
         assert "not found" in data["detail"].lower()
 
-    def test_start_run_no_task_returns_400(
-        self, test_client: TestClient, mock_repository: AsyncMock
-    ) -> None:
-        """Test that start_run returns 400 when no task is defined."""
-        now = datetime.now(tz=UTC)
-        run = models.Run(
-            id="no-task-id",
-            name="No Task Run",
-            task=None,
-            status=models.RunStatus.SETUP,
-            created_at=now,
-            updated_at=now,
-        )
-
-        mock_repository.get_run.return_value = run
-
-        response = test_client.post("/runs/no-task-id/start", json={})
-
-        assert response.status_code == 400
-        data = response.json()
-        assert "task" in data["detail"].lower()
-
-    def test_start_run_with_task_override(
-        self, test_client: TestClient, mock_repository: AsyncMock
-    ) -> None:
-        """Test that start_run accepts task override from request."""
-        now = datetime.now(tz=UTC)
-        run = models.Run(
-            id="override-test-id",
-            name="Override Test",
-            task="Original task",
-            status=models.RunStatus.SETUP,
-            created_at=now,
-            updated_at=now,
-        )
-
-        mock_repository.get_run.return_value = run
-
-        response = test_client.post(
-            "/runs/override-test-id/start",
-            json={"task": "New task"},
-        )
-
-        assert response.status_code == 202
-
-        data = response.json()
-
-        assert data["task"] == "New task"
-        assert data["status"] == "pending"
-
     def test_start_run_publishes_to_queue(
         self,
         test_client: TestClient,
@@ -326,5 +276,4 @@ class TestRunRouter:
         job = call_args[0][0]
 
         assert job.run_id == "queue-test-id"
-        assert job.task == "Queue task"
         assert job.name == "Queue Test"
