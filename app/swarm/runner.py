@@ -93,8 +93,6 @@ class SwarmRunner:
 
         run_usage = pydantic_ai.RunUsage()
 
-        logger.info("Starting swarm run for run_id: %s", job.run_id)
-
         entry = await manager.manager_agent.run(
             "start",
             model=run_dependencies.get_model_for_agent(models.AgentName.MANAGER),
