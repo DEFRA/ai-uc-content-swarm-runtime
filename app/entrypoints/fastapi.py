@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: fastapi.FastAPI) -> AsyncGenerator[None, None]:
-    # Startup
     client = await mongo.get_mongo_client()
     logger.info("MongoDB client connected")
 
@@ -35,8 +34,11 @@ async def lifespan(_: fastapi.FastAPI) -> AsyncGenerator[None, None]:
     sqs_adapter = run_dependencies.get_sqs_adapter(sqs_client)
     run_service = run_dependencies.get_run_service(run_repository, sqs_adapter)
 
+    swarm_runner_instance = swarm_dependencies.get_swarm_runner(
+        result_handler=run_service
+    )
     sqs_listener: sqs.AbstractQueueListener = swarm_dependencies.get_sqs_listener(
-        run_result_handler=run_service
+        swarm_runner_instance=swarm_runner_instance
     )
 
     listener_task = asyncio.create_task(sqs_listener.start())
@@ -44,14 +46,12 @@ async def lifespan(_: fastapi.FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    # Shutdown
     if sqs_listener:
         await sqs_listener.stop()
         logger.info("SQS listener stopped")
 
     if listener_task:
         listener_task.cancel()
-
         await listener_task
 
     if client:

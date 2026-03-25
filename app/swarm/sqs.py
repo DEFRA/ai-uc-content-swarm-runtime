@@ -56,17 +56,17 @@ class SqsListener(AbstractQueueListener):
         self,
         swarm_invoke_queue: SwarmInvokeQueueConfig,
         sqs_client: types_boto3_sqs.SQSClient,
-        job_handler: swarm_runner.SwarmJobHandler,
+        swarm_runner: swarm_runner.SwarmRunner,
     ) -> None:
         """Initialize the SQS listener.
 
         Args:
             swarm_invoke_queue: Typed swarm invoke queue configuration.
             sqs_client: An initialized boto3 SQS client.
-            job_handler: Callable that processes a SwarmJob asynchronously.
+            swarm_runner: SwarmRunner instance for executing jobs.
         """
         self.queue_url = swarm_invoke_queue.url
-        self.job_handler = job_handler
+        self.swarm_runner = swarm_runner
         self.poll_interval = swarm_invoke_queue.polling_interval
         self.max_messages = swarm_invoke_queue.batch_size
         self.wait_time = swarm_invoke_queue.wait_time
@@ -125,7 +125,7 @@ class SqsListener(AbstractQueueListener):
 
             logger.info("Processing swarm job for run %s", job.run_id)
 
-            await self.job_handler.handle_job(job)
+            await self.swarm_runner.handle_job(job)
 
             await self._delete_message(sqs_message.receipt_handle)
 

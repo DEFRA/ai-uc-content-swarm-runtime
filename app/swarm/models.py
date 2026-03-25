@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from uuid import UUID
 
 import pydantic_ai
 import pydantic_ai.messages
@@ -17,6 +17,7 @@ from app.swarm.prompts import repository as prompt_repo
 
 
 class AgentName(StrEnum):
+    MANAGER = "manager"
     RESEARCHER = "researcher"
     WRITER = "writer"
     CRITIC = "critic"
@@ -27,7 +28,7 @@ class SwarmJob:
     run_id: str
     task: str
     name: str
-    context_documents: list[dict]
+    context_documents: list[context_models.ContextDocument]
 
     @classmethod
     def from_message_body(cls, body: str) -> "SwarmJob":
@@ -37,15 +38,26 @@ class SwarmJob:
             body: The JSON message body from SQS.
 
         Returns:
-            A SwarmJob instance.
+            A SwarmJob instance with parsed context documents.
         """
         data = json.loads(body)
+
+        context_documents = [
+            context_models.ContextDocument(
+                id=UUID(doc["id"]),
+                type=context_models.ContextType.POLICY,
+                name=doc["name"],
+                description=doc.get("description"),
+                path=doc["path"],
+            )
+            for doc in data.get("context_documents", [])
+        ]
 
         return cls(
             run_id=data["run_id"],
             task=data["task"],
             name=data["name"],
-            context_documents=data.get("context_documents", []),
+            context_documents=context_documents,
         )
 
 
@@ -61,7 +73,9 @@ class AgentExchange:
 class GroupChat:
     """Holds the active agents and the growing conversation transcript."""
 
-    agents: dict[AgentName, Any] = field(default_factory=dict)
+    agents: dict[AgentName, "pydantic_ai.Agent[AgentDependencies, str]"] = field(
+        default_factory=dict
+    )
     transcript: list[AgentExchange] = field(default_factory=list)
 
     def format_transcript(self) -> str:
@@ -72,18 +86,6 @@ class GroupChat:
         for exchange in self.transcript:
             lines.append(f"\n**{exchange.agent_name}**: {exchange.response}")
         return "\n".join(lines)
-
-
-@dataclass
-class RunConfig:
-    """Configuration for a swarm run."""
-
-    task: str
-    id: str
-    name: str
-    context_documents: list[context_models.ContextDocument] = field(
-        default_factory=list
-    )
 
 
 @dataclass
@@ -112,7 +114,7 @@ class ModelMapping:
 
 @dataclass
 class AgentDependencies:
-    run_config: RunConfig
+    run_config: SwarmJob
     context_repository: context_repo.AbstractContextRepository
     content_pages_repository: content_pages_repo.AbstractContentPagesRepository
     group_chat: GroupChat = field(default_factory=GroupChat)

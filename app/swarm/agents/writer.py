@@ -55,7 +55,7 @@ async def create_page(
     logger.info("Writer created page: %s", page_key)
 
     await ctx.deps.content_pages_repository.save_page(
-        ctx.deps.run_config.id, page_key, content
+        ctx.deps.run_config.run_id, page_key, content
     )
 
     return f"Page '{page_key}' created."
@@ -87,7 +87,7 @@ async def update_page(
     logger.info("Writer updated page: %s", page_key)
 
     await ctx.deps.content_pages_repository.save_page(
-        ctx.deps.run_config.id, page_key, content
+        ctx.deps.run_config.run_id, page_key, content
     )
 
     return f"Page '{page_key}' updated."

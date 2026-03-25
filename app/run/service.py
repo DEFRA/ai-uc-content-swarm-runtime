@@ -63,7 +63,7 @@ class RunService:
             msg = f"Run with ID {run_id} not found"
             raise models.RunNotFoundError(msg)
 
-        run.task = 'generate_content'
+        run.task = "generate_content"
         run.status = models.RunStatus.PENDING
         run.updated_at = datetime.now(tz=UTC)
 
@@ -112,7 +112,6 @@ class RunService:
         run.status = status
         run.updated_at = datetime.now(tz=UTC)
 
-        # Persist the status update
         await self.repository.update_status(run.id, status)
 
         logger.info("Updated run %s status to %s", run.id, status.value)

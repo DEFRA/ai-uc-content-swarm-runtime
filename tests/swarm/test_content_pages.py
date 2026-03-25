@@ -9,7 +9,9 @@ from app.swarm import models
 
 @pytest.fixture
 def deps(mocker):
-    run_config = models.RunConfig(task="Test task", id="run-1", name="Test Run")
+    run_config = models.SwarmJob(
+        run_id="run-1", task="Test task", name="Test Run", context_documents=[]
+    )
     context_repo = mocker.MagicMock()
     content_pages_repo = mocker.MagicMock()
     return models.AgentDependencies(
