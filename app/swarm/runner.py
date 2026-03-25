@@ -105,8 +105,6 @@ class SwarmRunner:
             deps=run_dependencies,
         )
 
-        logger.info("Run completed for run_id: %s", job.run_id)
-
         return entry.output
 
     async def handle_job(self, job: models.SwarmJob) -> None:
