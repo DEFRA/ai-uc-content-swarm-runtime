@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 settings = config.get_config()
 
+
 class RunResultHandler(Protocol):
     """Protocol for status updates from swarm execution.
 
