@@ -25,7 +25,7 @@ create_queue() {
     --region ${AWS_REGION} \
     --attributes '{
       "VisibilityTimeout": "'${VISIBILITY_TIMEOUT}'",
-      "RedrivePolicy": "{\"deadLetterTargetArn\":\"'${DLQ_ARN}'\",\"maxReceiveCount\":\"3\"}"
+      "RedrivePolicy": "{\"deadLetterTargetArn\":\"'${DLQ_ARN}'\",\"maxReceiveCount\":\"1\"}"
     }'
 
   echo "Queue ${QUEUE_NAME_TO_CREATE} created successfully"
