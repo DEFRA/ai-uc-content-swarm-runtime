@@ -125,9 +125,10 @@ class SqsListener(AbstractQueueListener):
 
             logger.info("Processing swarm job for run %s", job.run_id)
 
-            await self.swarm_runner.handle_job(job)
-
-            await self._delete_message(sqs_message.receipt_handle)
+            try:
+                await self.swarm_runner.handle_job(job)
+            finally:
+                await self._delete_message(sqs_message.receipt_handle)
 
             logger.info("Completed swarm job for run %s", job.run_id)
         except Exception as e:

@@ -63,10 +63,6 @@ class RunService:
             msg = f"Run with ID {run_id} not found"
             raise models.RunNotFoundError(msg)
 
-        run.task = "generate_content"
-        run.status = models.RunStatus.PENDING
-        run.updated_at = datetime.now(tz=UTC)
-
         context_documents = [
             {
                 "id": str(ctx.id),
@@ -79,12 +75,13 @@ class RunService:
 
         job = sqs_adapter.SwarmRunJob(
             run_id=run.id,
-            task=run.task,
             name=run.name,
             context_documents=context_documents,
         )
 
         await self.sqs.publish_job(job)
+
+        await self.update_status(run.id, models.RunStatus.PENDING)
 
         logger.info("Published run job %s to queue", run.id)
 
@@ -141,7 +138,6 @@ class RunService:
         run.status = models.RunStatus.COMPLETED
         run.updated_at = datetime.now(tz=UTC)
 
-        # Persist the result
         await self.repository.update_run_result(run.id, result)
 
         logger.info("Stored result for run %s", run.id)

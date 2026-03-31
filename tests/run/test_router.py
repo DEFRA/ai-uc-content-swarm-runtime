@@ -38,7 +38,6 @@ def test_client(
     def override_get_sqs_adapter() -> sqs_adapter.AbstractJobPublisher:
         return mock_sqs_adapter  # type: ignore[return-value]
 
-    # Mock the swarm runner to avoid boto3 client initialization
     mock_swarm_runner = mocker.AsyncMock()
 
     def override_get_swarm_runner():
@@ -219,7 +218,6 @@ class TestRunRouter:
         run = models.Run(
             id="start-test-id",
             name="Start Test",
-            task="Test task",
             status=models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,
@@ -258,7 +256,6 @@ class TestRunRouter:
         run = models.Run(
             id="queue-test-id",
             name="Queue Test",
-            task="Queue task",
             status=models.RunStatus.SETUP,
             created_at=now,
             updated_at=now,

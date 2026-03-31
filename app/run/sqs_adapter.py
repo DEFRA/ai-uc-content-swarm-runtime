@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 
 import types_boto3_sqs
 
@@ -12,24 +13,14 @@ from app.config import SwarmInvokeQueueConfig
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class SwarmRunJob:
     """Job message to be sent to the queue."""
 
-    def __init__(
-        self, run_id: str, task: str, name: str, context_documents: list[dict]
-    ) -> None:
-        """Initialize a swarm run job.
-
-        Args:
-            run_id: Unique identifier for the run.
-            task: Task description for the swarm.
-            name: Name of the run.
-            context_documents: List of context document dicts with id, name, description, and path.
-        """
-        self.run_id = run_id
-        self.task = task
-        self.name = name
-        self.context_documents = context_documents
+    run_id: str
+    name: str
+    context_documents: list[dict]
+    task: str = field(default="generate_content")
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""

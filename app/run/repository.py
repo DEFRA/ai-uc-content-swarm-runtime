@@ -95,7 +95,6 @@ class MongoRunRepository(RunRepository):
         return models.Run(
             id=str(result.inserted_id),
             name=run.name,
-            task=run.task,
             status=run.status,
             result=run.result,
             created_at=run.created_at,
@@ -119,7 +118,6 @@ class MongoRunRepository(RunRepository):
         run = models.Run(
             id=str(doc["_id"]),
             name=doc["name"],
-            task=doc.get("task"),
             status=models.RunStatus(doc["status"]),
             result=doc.get("result"),
             created_at=doc["created_at"],

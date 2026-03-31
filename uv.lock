@@ -2,6 +2,10 @@ version = 1
 revision = 3
 requires-python = ">=3.13"
 
+[options]
+exclude-newer = "2026-03-20T12:34:19.438721368Z"
+exclude-newer-span = "P1W"
+
 [[package]]
 name = "ag-ui-protocol"
 version = "0.1.14"
@@ -1238,11 +1242,11 @@ wheels = [
 
 [[package]]
 name = "jaraco-context"
-version = "6.1.2"
+version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/af/50/4763cd07e722bb6285316d390a164bc7e479db9d90daa769f22578f698b4/jaraco_context-6.1.2.tar.gz", hash = "sha256:f1a6c9d391e661cc5b8d39861ff077a7dc24dc23833ccee564b234b81c82dfe3", size = 16801, upload-time = "2026-03-20T22:13:33.922Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/27/7b/c3081ff1af947915503121c649f26a778e1a2101fd525f74aef997d75b7e/jaraco_context-6.1.1.tar.gz", hash = "sha256:bc046b2dc94f1e5532bd02402684414575cc11f565d929b6563125deb0a6e581", size = 15832, upload-time = "2026-03-07T15:46:04.63Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/58/bc8954bda5fcda97bd7c19be11b85f91973d67a706ed4a3aec33e7de22db/jaraco_context-6.1.2-py3-none-any.whl", hash = "sha256:bf8150b79a2d5d91ae48629d8b427a8f7ba0e1097dd6202a9059f29a36379535", size = 7871, upload-time = "2026-03-20T22:13:32.808Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/49/c152890d49102b280ecf86ba5f80a8c111c3a155dafa3bd24aeb64fde9e1/jaraco_context-6.1.1-py3-none-any.whl", hash = "sha256:0df6a0287258f3e364072c3e40d5411b20cafa30cb28c4839d24319cecf9f808", size = 7005, upload-time = "2026-03-07T15:46:03.515Z" },
 ]
 
 [[package]]
@@ -1537,7 +1541,7 @@ wheels = [
 
 [[package]]
 name = "mistralai"
-version = "2.1.2"
+version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "eval-type-backport" },
@@ -1548,9 +1552,9 @@ dependencies = [
     { name = "python-dateutil" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/b9/b32036b82bdff5751c7eed95699a3dd4c76c6841fb0017ca62036f49e0aa/mistralai-2.1.2.tar.gz", hash = "sha256:a354dbc53c9398a7e8451a64f0166e924a412c6e6a8fb8efbb3650fb3817ac38", size = 329236, upload-time = "2026-03-20T15:17:00.282Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/2b/c6246bf853b17ea8f97a9a898f5910fcc47e5d93db2e56892cbb7363b9cf/mistralai-2.1.0.tar.gz", hash = "sha256:651a31832bd915692ffe9709666c06b445b3f582cc1c99bcdbe5589baa99913e", size = 330421, upload-time = "2026-03-20T08:54:08.995Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/70/da0e58467046ec8b6ea2a9f59c116ea169b007d4dd835ea83bc38441f651/mistralai-2.1.2-py3-none-any.whl", hash = "sha256:211069f1b767710a97f176130634a7736d853a25c3ffed023cf72017e9f8f14a", size = 744599, upload-time = "2026-03-20T15:17:01.495Z" },
+    { url = "https://files.pythonhosted.org/packages/93/09/bb8576b086373b19b0a509f1f617b52fcded321f822f154e0525c20ef41b/mistralai-2.1.0-py3-none-any.whl", hash = "sha256:d7992bc04a9184e8e7477650912a00de43356e225bb19e29e92d4ffebdb1ec26", size = 746507, upload-time = "2026-03-20T08:54:07.302Z" },
 ]
 
 [[package]]

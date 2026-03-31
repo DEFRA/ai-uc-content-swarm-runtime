@@ -36,7 +36,6 @@ async def create_run(
     run = models.Run(
         id=str(uuid.uuid4()),
         name=request.name,
-        task=request.task,
         status=models.RunStatus.SETUP,
         created_at=now,
         updated_at=now,
@@ -47,7 +46,6 @@ async def create_run(
     return api_schemas.RunResponse(
         id=run.id,
         name=run.name,
-        task=run.task,
         status=run.status,
         result=run.result,
         created_at=run.created_at,
@@ -85,7 +83,6 @@ async def get_run(
     return api_schemas.RunResponse(
         id=run.id,
         name=run.name,
-        task=run.task,
         status=run.status,
         result=run.result,
         created_at=run.created_at,
@@ -125,7 +122,6 @@ async def start_run(
     return api_schemas.RunResponse(
         id=run.id,
         name=run.name,
-        task=run.task,
         status=run.status,
         result=run.result,
         created_at=run.created_at,

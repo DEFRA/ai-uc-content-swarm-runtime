@@ -24,7 +24,6 @@ class Run:
     id: str
     name: str
     status: RunStatus = RunStatus.SETUP
-    task: str | None = None
     result: str | None = None
     created_at: datetime = datetime.now(tz=UTC)
     updated_at: datetime = datetime.now(tz=UTC)
@@ -66,7 +65,6 @@ class Run:
         """
         return {
             "name": self.name,
-            "task": self.task,
             "status": self.status.value,
             "result": self.result,
             "created_at": self.created_at,
