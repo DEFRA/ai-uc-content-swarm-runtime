@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 import app.run.dependencies as run_dependencies
 import app.swarm.dependencies as swarm_dependencies
 from app.entrypoints import fastapi
-from app.run import api_schemas, models, repository
+from app.run import api_schemas, models, repository, sqs_adapter
 
 
 @pytest.fixture
@@ -19,15 +19,25 @@ def mock_repository(mocker: MockerFixture) -> AsyncMock:
 
 
 @pytest.fixture
+def mock_sqs_adapter(mocker: MockerFixture) -> AsyncMock:
+    """Create a mocked SQS adapter based on the ABC."""
+    return mocker.AsyncMock(spec=sqs_adapter.AbstractJobPublisher)  # type: ignore[no-any-return]
+
+
+@pytest.fixture
 def test_client(
-    mock_repository: AsyncMock, mocker: MockerFixture
+    mock_repository: AsyncMock,
+    mock_sqs_adapter: AsyncMock,
+    mocker: MockerFixture,
 ) -> Generator[TestClient, None, None]:
     """Create a TestClient with mocked repository and swarm dependencies."""
 
     def override_get_run_repository() -> repository.RunRepository:
         return mock_repository  # type: ignore[return-value]
 
-    # Mock the swarm runner to avoid boto3 client initialization
+    def override_get_sqs_adapter() -> sqs_adapter.AbstractJobPublisher:
+        return mock_sqs_adapter  # type: ignore[return-value]
+
     mock_swarm_runner = mocker.AsyncMock()
 
     def override_get_swarm_runner():
@@ -35,6 +45,9 @@ def test_client(
 
     fastapi.app.dependency_overrides[run_dependencies.get_run_repository] = (
         override_get_run_repository
+    )
+    fastapi.app.dependency_overrides[run_dependencies.get_sqs_adapter] = (
+        override_get_sqs_adapter
     )
     fastapi.app.dependency_overrides[swarm_dependencies.get_swarm_runner] = (
         override_get_swarm_runner
@@ -196,3 +209,68 @@ class TestRunRouter:
         assert run_response.id == "get-response-test-id"
         assert run_response.name == "Get Response Test"
         assert run_response.status == models.RunStatus.SETUP
+
+    def test_start_run_success(
+        self, test_client: TestClient, mock_repository: AsyncMock
+    ) -> None:
+        """Test successful run start via POST /runs/{run_id}/start."""
+        now = datetime.now(tz=UTC)
+        run = models.Run(
+            id="start-test-id",
+            name="Start Test",
+            status=models.RunStatus.SETUP,
+            created_at=now,
+            updated_at=now,
+        )
+
+        mock_repository.get_run.return_value = run
+
+        response = test_client.post("/runs/start-test-id/start", json={})
+
+        assert response.status_code == 202
+        data = response.json()
+        assert data["id"] == "start-test-id"
+        assert data["status"] == "pending"
+        mock_repository.get_run.assert_called_with("start-test-id")
+
+    def test_start_run_not_found(
+        self, test_client: TestClient, mock_repository: AsyncMock
+    ) -> None:
+        """Test that POST /runs/{run_id}/start returns 404 when run is not found."""
+        mock_repository.get_run.return_value = None
+
+        response = test_client.post("/runs/nonexistent-id/start", json={})
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"].lower()
+
+    def test_start_run_publishes_to_queue(
+        self,
+        test_client: TestClient,
+        mock_repository: AsyncMock,
+        mock_sqs_adapter: AsyncMock,
+    ) -> None:
+        """Test that start_run publishes a job to the queue."""
+        now = datetime.now(tz=UTC)
+        run = models.Run(
+            id="queue-test-id",
+            name="Queue Test",
+            status=models.RunStatus.SETUP,
+            created_at=now,
+            updated_at=now,
+        )
+
+        mock_repository.get_run.return_value = run
+
+        response = test_client.post("/runs/queue-test-id/start", json={})
+
+        assert response.status_code == 202
+
+        mock_sqs_adapter.publish_job.assert_called_once()
+        call_args = mock_sqs_adapter.publish_job.call_args
+
+        job = call_args[0][0]
+
+        assert job.run_id == "queue-test-id"
+        assert job.name == "Queue Test"

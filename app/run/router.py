@@ -47,6 +47,7 @@ async def create_run(
         id=run.id,
         name=run.name,
         status=run.status,
+        result=run.result,
         created_at=run.created_at,
         updated_at=run.updated_at,
     )
@@ -83,6 +84,46 @@ async def get_run(
         id=run.id,
         name=run.name,
         status=run.status,
+        result=run.result,
+        created_at=run.created_at,
+        updated_at=run.updated_at,
+    )
+
+
+@router.post("/{run_id}/start", status_code=fastapi.status.HTTP_202_ACCEPTED)
+async def start_run(
+    run_id: str,
+    service: Annotated[
+        run_service.RunService, fastapi.Depends(run_dependencies.get_run_service)
+    ],
+) -> api_schemas.RunResponse:
+    """Start a run by publishing a job to the SQS queue.
+
+    Updates the run status to PENDING and publishes the job to the swarm queue.
+
+    Args:
+        run_id: The ID of the run to start.
+        service: The RunService instance (injected).
+
+    Returns:
+        The updated Run record with status=PENDING.
+
+    Raises:
+        HTTPException: 404 if the run is not found.
+    """
+    try:
+        run = await service.start_run(run_id)
+    except models.RunNotFoundError:
+        raise fastapi.HTTPException(
+            status_code=fastapi.status.HTTP_404_NOT_FOUND,
+            detail=f"Run with id {run_id} not found",
+        ) from None
+
+    return api_schemas.RunResponse(
+        id=run.id,
+        name=run.name,
+        status=run.status,
+        result=run.result,
         created_at=run.created_at,
         updated_at=run.updated_at,
     )

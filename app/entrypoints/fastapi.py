@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from collections.abc import AsyncGenerator
@@ -6,12 +7,14 @@ from contextlib import asynccontextmanager
 import fastapi
 import uvicorn
 
-import app.common.mongo as mongo
-import app.common.tracing as tracing
-import app.config as app_config
-import app.health.router as health_router
-import app.run.router as run_router
-import app.swarm.router as swarm_router
+from app import config as app_config
+from app.common import mongo, tracing
+from app.health import router as health_router
+from app.run import dependencies as run_dependencies
+from app.run import router as run_router
+from app.swarm import dependencies as swarm_dependencies
+from app.swarm import router as swarm_router
+from app.swarm import sqs
 
 config = app_config.get_config()
 
@@ -21,11 +24,36 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: fastapi.FastAPI) -> AsyncGenerator[None, None]:
-    # Startup
     client = await mongo.get_mongo_client()
     logger.info("MongoDB client connected")
+
+    db = await mongo.get_db(client)
+
+    run_repository = run_dependencies.get_run_repository(db)
+    sqs_client = run_dependencies.get_sqs_client()
+    sqs_adapter = run_dependencies.get_sqs_adapter(sqs_client)
+    run_service = run_dependencies.get_run_service(run_repository, sqs_adapter)
+
+    swarm_runner_instance = swarm_dependencies.get_swarm_runner(
+        result_handler=run_service
+    )
+    sqs_listener: sqs.AbstractQueueListener = swarm_dependencies.get_sqs_listener(
+        swarm_runner_instance=swarm_runner_instance
+    )
+
+    listener_task = asyncio.create_task(sqs_listener.start())
+    logger.info("SQS listener started")
+
     yield
-    # Shutdown
+
+    if sqs_listener:
+        await sqs_listener.stop()
+        logger.info("SQS listener stopped")
+
+    if listener_task:
+        listener_task.cancel()
+        await listener_task
+
     if client:
         await client.close()
         logger.info("MongoDB client closed")

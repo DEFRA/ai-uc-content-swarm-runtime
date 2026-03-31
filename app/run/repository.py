@@ -50,6 +50,24 @@ class RunRepository(ABC):
             context: A ContextMetadata or list of ContextMetadata to append/upsert.
         """
 
+    @abstractmethod
+    async def update_status(self, run_id: str, status: models.RunStatus) -> None:
+        """Update the status of a run.
+
+        Args:
+            run_id: The ID of the run.
+            status: The new RunStatus value.
+        """
+
+    @abstractmethod
+    async def update_run_result(self, run_id: str, result: str) -> None:
+        """Update the result and status of a run.
+
+        Args:
+            run_id: The ID of the run.
+            result: The result output to store.
+        """
+
 
 class MongoRunRepository(RunRepository):
     """MongoDB-backed implementation of RunRepository."""
@@ -72,21 +90,13 @@ class MongoRunRepository(RunRepository):
         Returns:
             The created Run record with MongoDB-assigned ID.
         """
-
-        result = await self.collection.insert_one(
-            {
-                "name": run.name,
-                "status": run.status.value,
-                "created_at": run.created_at,
-                "updated_at": run.updated_at,
-                "contexts": [],
-            }
-        )
+        result = await self.collection.insert_one(run.to_document())
 
         return models.Run(
             id=str(result.inserted_id),
             name=run.name,
             status=run.status,
+            result=run.result,
             created_at=run.created_at,
             updated_at=run.updated_at,
         )
@@ -109,6 +119,7 @@ class MongoRunRepository(RunRepository):
             id=str(doc["_id"]),
             name=doc["name"],
             status=models.RunStatus(doc["status"]),
+            result=doc.get("result"),
             created_at=doc["created_at"],
             updated_at=doc["updated_at"],
         )
@@ -175,3 +186,46 @@ class MongoRunRepository(RunRepository):
                     {"_id": oid},
                     {"$push": {"contexts": context_doc}},
                 )
+
+    async def update_status(self, run_id: str, status: models.RunStatus) -> None:
+        """Update the status of a run.
+
+        Args:
+            run_id: The ID of the run.
+            status: The new RunStatus value.
+        """
+        from datetime import UTC, datetime
+
+        oid = bson.ObjectId(run_id)
+
+        await self.collection.update_one(
+            {"_id": oid},
+            {
+                "$set": {
+                    "status": status.value,
+                    "updated_at": datetime.now(tz=UTC),
+                }
+            },
+        )
+
+    async def update_run_result(self, run_id: str, result: str) -> None:
+        """Update the result and status of a run.
+
+        Args:
+            run_id: The ID of the run.
+            result: The result output to store.
+        """
+        from datetime import UTC, datetime
+
+        oid = bson.ObjectId(run_id)
+
+        await self.collection.update_one(
+            {"_id": oid},
+            {
+                "$set": {
+                    "result": result,
+                    "status": models.RunStatus.COMPLETED.value,
+                    "updated_at": datetime.now(tz=UTC),
+                }
+            },
+        )

@@ -15,9 +15,9 @@ async def run_swarm(
         runner.SwarmRunner, fastapi.Depends(dependencies.get_swarm_runner)
     ],
 ) -> api_schemas.RunResponse:
-    config = models.RunConfig(
+    job = models.SwarmJob(
+        run_id=request.id,
         task=request.task,
-        id=request.id,
         name=request.name,
         context_documents=[
             context_models.ContextDocument(
@@ -31,6 +31,6 @@ async def run_swarm(
         ],
     )
 
-    output = await runner.start_run(config)
+    output = await runner.start_run(job)
 
     return api_schemas.RunResponse(output=output)

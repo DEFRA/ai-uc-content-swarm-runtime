@@ -19,3 +19,7 @@ os.environ.setdefault("ENABLE_METRICS", "false")
 os.environ.setdefault("TRACING_HEADER", "x-cdp-request-id")
 os.environ.setdefault("CDP_UPLOADER_BASE_URL", "http://localhost:8000")
 os.environ.setdefault("CONTEXT_BUCKET", "ai-uc-content-swarm-context")
+os.environ.setdefault(
+    "SWARM_INVOKE_QUEUE_URL",
+    "http://sqs.eu-west-2.127.0.0.1:4566/000000000000/ai_content_swarm_invoke",
+)

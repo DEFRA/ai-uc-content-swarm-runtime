@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 from pytest_mock import MockerFixture
 
-from app.run import models, repository, service
+from app.run import models, repository, service, sqs_adapter
 
 
 class TestRunService:
@@ -16,16 +16,21 @@ class TestRunService:
         return mocker.AsyncMock(spec=repository.RunRepository)  # type: ignore[no-any-return]
 
     @pytest.fixture
-    def mock_swarm(self, mocker: MockerFixture) -> AsyncMock:
-        """Create a mock SwarmRunner."""
-        return mocker.AsyncMock()  # type: ignore[no-any-return]
+    def mock_job_queue(self, mocker: MockerFixture) -> AsyncMock:
+        """Create a mock job queue adapter."""
+        return mocker.AsyncMock(spec=sqs_adapter.AbstractJobPublisher)  # type: ignore[no-any-return]
 
     @pytest.fixture
     def run_service(
-        self, mock_repository: AsyncMock, mock_swarm: AsyncMock
+        self,
+        mock_repository: AsyncMock,
+        mock_job_queue: AsyncMock,
     ) -> service.RunService:
         """Create a RunService with mocked dependencies."""
-        return service.RunService(run_repository=mock_repository, swarm=mock_swarm)
+        return service.RunService(
+            run_repository=mock_repository,
+            sqs=mock_job_queue,
+        )
 
     @pytest.mark.asyncio
     async def test_setup_run_creates_and_returns_run(
