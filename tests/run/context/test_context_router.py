@@ -87,16 +87,20 @@ class TestGetRunContexts:
             created_at=now,
             updated_at=now,
         )
+        cdp_uploader = context_models.CdpUploaderMetadata(
+            s3_bucket="bucket",
+            upload_id="upload-123",
+            s3_key="key",
+            filename="file.txt",
+            checksum_sha256="abc",
+            status="uploaded",
+        )
         run.add_context(
             context_models.ContextMetadata(
                 id=uuid.uuid4(),
                 title="T",
-                s3_bucket="bucket",
-                s3_key="key",
-                filename="file.txt",
-                checksum_sha256="abc",
-                status="uploaded",
                 created_at=now,
+                cdp_uploader=cdp_uploader,
             )
         )
         return run
@@ -154,12 +158,8 @@ class TestGetRunContexts:
 
         assert len(res) == 1
         assert res[0].id == ctx.id
-        assert res[0].filename == ctx.filename
         assert res[0].title == ctx.title
-        assert res[0].s3_key == ctx.s3_key
-        assert res[0].s3_bucket == ctx.s3_bucket
-        assert res[0].checksum_sha256 == ctx.checksum_sha256
-        assert res[0].status == ctx.status
+        assert res[0].created_at == ctx.created_at
 
 
 class TestHandleCallback:

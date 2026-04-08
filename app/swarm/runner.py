@@ -115,6 +115,19 @@ class SwarmRunner:
             Exception: If execution fails (after status is updated to ERROR).
         """
         logger.info("Handling swarm job for run %s", job.run_id)
+
+        current_status = await self.result_handler.get_status(job.run_id)
+
+        if current_status is None:
+            raise ValueError(f"Status for run {job.run_id} not found. Cannot process job.")
+
+        if current_status == RunStatus.RUNNING:
+            logger.warning(
+                "Skipping job for run %s: already in RUNNING status",
+                job.run_id,
+            )
+            return
+
         logger.info(
             "Starting swarm execution for run %s with task: %s",
             job.run_id,

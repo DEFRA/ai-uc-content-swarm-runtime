@@ -9,15 +9,23 @@ class UploadInitiation:
 
 
 @dataclass
+class CdpUploaderMetadata:
+    """Metadata for CDP uploader integration (S3 upload tracking)."""
+
+    s3_bucket: str
+    upload_id: str | None = None
+    s3_key: str | None = None
+    checksum_sha256: str | None = None
+    filename: str | None = None
+    status: str = "pending"
+
+
+@dataclass
 class ContextMetadata:
     """Metadata for a context document (file) attached to a run."""
 
     id: uuid.UUID
     title: str
-    s3_bucket: str
-    s3_key: str | None = None
-    checksum_sha256: str | None = None
-    filename: str | None = None
-    status: str = "uploaded"
     created_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
     description: str | None = None
+    cdp_uploader: CdpUploaderMetadata | None = None
