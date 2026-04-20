@@ -144,6 +144,18 @@ class RunService:
 
         return run
 
+    async def get_status(self, run_id: str) -> models.RunStatus | None:
+        """Retrieve the current status of a run.
+
+        Args:
+            run_id: The ID of the run to retrieve.
+
+        Returns:
+            The current RunStatus, or None if the run does not exist.
+        """
+        run = await self.repository.get_run(run_id)
+        return run.status if run else None
+
     async def get_run(self, run_id: str) -> models.Run | None:
         """Retrieve a run by its ID.
 

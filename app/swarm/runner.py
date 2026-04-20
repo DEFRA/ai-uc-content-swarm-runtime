@@ -23,6 +23,17 @@ class RunResultHandler(Protocol):
     lifecycle updates as the run transitions through PENDING → RUNNING → COMPLETED/ERROR.
     """
 
+    async def get_status(self, run_id: str) -> RunStatus | None:
+        """Retrieve the current status of a run.
+
+        Args:
+            run_id: The ID of the run.
+
+        Returns:
+            The current RunStatus, or None if the run does not exist.
+        """
+        ...
+
     async def update_status(self, run_id: str, status: RunStatus) -> Any:
         """Update the status of a swarm run.
 
