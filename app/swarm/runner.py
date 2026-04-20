@@ -119,7 +119,8 @@ class SwarmRunner:
         current_status = await self.result_handler.get_status(job.run_id)
 
         if current_status is None:
-            raise ValueError(f"Status for run {job.run_id} not found. Cannot process job.")
+            msg = f"Status for run {job.run_id} not found. Cannot process job."
+            raise ValueError(msg)
 
         if current_status == RunStatus.RUNNING:
             logger.warning(
