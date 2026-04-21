@@ -110,6 +110,7 @@ class MongoRunRepository(RunRepository):
             ctx_id: uuid.UUID = ctx_doc["id"]
 
             cdp_uploader = None
+
             if "cdpUploader" in ctx_doc:
                 cdp_doc = ctx_doc["cdpUploader"]
                 cdp_uploader = context_models.CdpUploaderMetadata(

@@ -89,6 +89,16 @@ async def get_run_contexts(
             title=ctx.title,
             created_at=ctx.created_at,
             description=ctx.description,
+            cdp_uploader=(
+                api_schemas.CdpUploaderResponse(
+                    status=ctx.cdp_uploader.status,
+                    upload_id=ctx.cdp_uploader.upload_id,
+                    filename=ctx.cdp_uploader.filename,
+                    s3_key=ctx.cdp_uploader.s3_key,
+                )
+                if ctx.cdp_uploader
+                else None
+            ),
         )
         for ctx in run.contexts
     ]

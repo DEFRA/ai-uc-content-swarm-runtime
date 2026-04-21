@@ -53,6 +53,27 @@ class CdpUploaderStatusPayload(pydantic.BaseModel):
     )
 
 
+class CdpUploaderResponse(pydantic.BaseModel):
+    """Response model for CDP uploader metadata and upload status."""
+
+    model_config = pydantic.ConfigDict(
+        populate_by_name=True, alias_generator=pydantic.alias_generators.to_camel
+    )
+
+    status: str = pydantic.Field(
+        default="pending", description="Current upload status (pending, completed, failed, etc.)"
+    )
+    upload_id: str | None = pydantic.Field(
+        default=None, description="Unique identifier for the upload session"
+    )
+    filename: str | None = pydantic.Field(
+        default=None, description="Original filename of the uploaded document"
+    )
+    s3_key: str | None = pydantic.Field(
+        default=None, description="S3 object key where the file is stored"
+    )
+
+
 class ContextResponse(pydantic.BaseModel):
     """Response model for a context document attached to a run."""
 
@@ -67,4 +88,7 @@ class ContextResponse(pydantic.BaseModel):
     )
     description: str | None = pydantic.Field(
         default=None, description="Description of the context"
+    )
+    cdp_uploader: CdpUploaderResponse | None = pydantic.Field(
+        default=None, description="CDP uploader metadata and upload status information"
     )
