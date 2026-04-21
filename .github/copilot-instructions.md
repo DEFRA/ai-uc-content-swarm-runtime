@@ -27,11 +27,24 @@ The `ai-uc-content-swam-runtime` is a Python-based backend service that is an ex
 - `tests/entrypoints/test_fastapi.py` – Example of a pytest test file.
 - `pyproject.toml` – Project configuration and dependencies.
 
+## AI Agents
+
+Specialist agents are available in `.github/agents/` for focused coding tasks:
+
+- [`python-writer.agent.md`](./agents/python-writer.agent.md) – Writes new Python code following project conventions. Use when creating new modules, functions, or classes from scratch.
+- [`python-reviewer.agent.md`](./agents/python-reviewer.agent.md) – Reviews existing Python code against project conventions. Produces a structured pass/fail report with actionable fixes.
+
+These agents hand off to each other: `python-writer` can invoke `python-reviewer` after writing, and `python-reviewer` can invoke `python-writer` to fix identified issues.
+
+You **MUST** delegate (using the `runSubAgent` tool) to these agents for any task which has a dedicated agent, rather than trying to do the work directly.
+
 ---
 
 # AI Coding Guidelines (Python)
 
 These rules apply to all AI-assisted Python development in this repository.
+
+See [style guide](./resources/style-guides/python.md) for the full set of coding conventions.
 
 The AI assistant MUST follow these guidelines when generating or modifying Python code, tests, or tooling.
 
@@ -201,25 +214,5 @@ The assistant SHOULD avoid:
 
 - Large refactors without tests.
 - Over-engineering or unnecessary abstractions.
-
----
-
-## 6. Further Reading
-You should ensure you fetch the team's Python style guide and any project-specific guidelines to align with existing conventions.
-https://github.com/DEFRA/aice-team/blob/main/style-guides/python.md
-
----
-
-## 6. Self-checklist for AI-generated Python Changes
-
-Before finalising, the assistant SHOULD verify:
-
-- [ ] All suggested commands use `uv` and `taskipy` when applicable.
-- [ ] Tests use pytest, function-based, no unittest.
-- [ ] Pytest fixtures used appropriately (`mocker`, `tmp_path`, `monkeypatch`, etc.).
-- [ ] Code is expected to pass `ruff` checks.
-- [ ] No new dependencies added without instruction.
-- [ ] Public APIs preserved unless explicitly changed.
-- [ ] Tests added or updated for new or changed behaviour.
 
 ---

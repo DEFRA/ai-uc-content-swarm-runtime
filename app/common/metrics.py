@@ -24,6 +24,6 @@ def __put_metric(metric_name: str, value: float, unit: str, metrics: Any) -> Non
 # This does not set metric on the call to __put_metric not sure why?
 def counter(metric_name: str, value: float) -> None:
     try:
-        __put_metric(metric_name, value, "Count")
+        __put_metric(metric_name, value, "Count")  # type: ignore[call-arg]
     except Exception as e:
         logger.error("Error calling put_metric: %s", e)

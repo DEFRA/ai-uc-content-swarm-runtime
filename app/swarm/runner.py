@@ -23,6 +23,17 @@ class RunResultHandler(Protocol):
     lifecycle updates as the run transitions through PENDING → RUNNING → COMPLETED/ERROR.
     """
 
+    async def get_status(self, run_id: str) -> RunStatus | None:
+        """Retrieve the current status of a run.
+
+        Args:
+            run_id: The ID of the run.
+
+        Returns:
+            The current RunStatus, or None if the run does not exist.
+        """
+        ...
+
     async def update_status(self, run_id: str, status: RunStatus) -> Any:
         """Update the status of a swarm run.
 
@@ -115,6 +126,20 @@ class SwarmRunner:
             Exception: If execution fails (after status is updated to ERROR).
         """
         logger.info("Handling swarm job for run %s", job.run_id)
+
+        current_status = await self.result_handler.get_status(job.run_id)
+
+        if current_status is None:
+            msg = f"Status for run {job.run_id} not found. Cannot process job."
+            raise ValueError(msg)
+
+        if current_status == RunStatus.RUNNING:
+            logger.warning(
+                "Skipping job for run %s: already in RUNNING status",
+                job.run_id,
+            )
+            return
+
         logger.info(
             "Starting swarm execution for run %s with task: %s",
             job.run_id,

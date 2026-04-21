@@ -6,7 +6,8 @@ from app import config
 from app.common import http_client
 from app.run import models as run_models
 from app.run import repository
-from app.run.context import api_schemas, models
+from app.run.context import api_schemas
+from app.run.context import models as context_models
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class ContextService:
 
     async def initiate_upload(
         self, run_id: str, request: api_schemas.ContextUploadRequest
-    ) -> models.UploadInitiation:
+    ) -> context_models.UploadInitiation:
         """Initiate a file upload session.
 
         Args:
@@ -62,18 +63,23 @@ class ContextService:
 
             data = api_schemas.CdpUploaderInitiateResponse(**resp.json())
 
-            pending_context = models.ContextMetadata(
-                id=context_id,
-                title=request.title,
+            cdp_uploader = context_models.CdpUploaderMetadata(
                 s3_bucket=settings.context_bucket,
-                s3_key=None,
-                checksum_sha256=None,
+                upload_id=data.upload_id,
                 status="pending",
-                created_at=datetime.now(tz=UTC),
-                description=request.description,
             )
 
-            await self.repository.append_context(run_id, pending_context)
+            pending_context = context_models.ContextMetadata(
+                id=context_id,
+                title=request.title,
+                created_at=datetime.now(tz=UTC),
+                description=request.description,
+                cdp_uploader=cdp_uploader,
+            )
+
+            run.add_context(pending_context)
+
+            await self.repository.update_run(run_id, run)
 
             logger.info(
                 "Initiated upload session %s for run %s with context ID %s",
@@ -82,7 +88,7 @@ class ContextService:
                 pending_context.id,
             )
 
-            return models.UploadInitiation(
+            return context_models.UploadInitiation(
                 upload_id=data.upload_id,
             )
 
@@ -107,22 +113,29 @@ class ContextService:
 
         pending_context = run.get_context(context_id)
 
-        if pending_context:
+        if pending_context and pending_context.cdp_uploader:
             # Return as soon as first file upload detail is processed
             for form_value in payload.form.values():
                 if isinstance(form_value, api_schemas.FileUploadDetail):
-                    updated_context = models.ContextMetadata(
-                        id=context_id,
-                        title=pending_context.title,
-                        s3_key=form_value.s3_key,
+                    # Update the CDP uploader metadata with callback results
+                    updated_cdp_uploader = context_models.CdpUploaderMetadata(
                         s3_bucket=form_value.s3_bucket,
+                        upload_id=pending_context.cdp_uploader.upload_id,
+                        s3_key=form_value.s3_key,
                         checksum_sha256=form_value.checksum_sha256,
                         filename=form_value.filename,
                         status=form_value.file_status,
-                        created_at=pending_context.created_at,
-                        description=pending_context.description,
                     )
 
-                    await self.repository.append_context(run.id, updated_context)
+                    updated_context = context_models.ContextMetadata(
+                        id=context_id,
+                        title=pending_context.title,
+                        created_at=pending_context.created_at,
+                        description=pending_context.description,
+                        cdp_uploader=updated_cdp_uploader,
+                    )
+
+                    run.add_context(updated_context)
+                    await self.repository.update_run(run.id, run)
 
                     return

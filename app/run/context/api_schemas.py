@@ -60,23 +60,11 @@ class ContextResponse(pydantic.BaseModel):
         populate_by_name=True, alias_generator=pydantic.alias_generators.to_camel
     )
 
-    id: uuid.UUID = pydantic.Field(
-        ..., description="Unique identifier for the context (fileId)"
-    )
-    filename: str | None = pydantic.Field(
-        default=None, description="Filename of the uploaded content"
-    )
+    id: uuid.UUID = pydantic.Field(..., description="Unique identifier for the context")
     title: str = pydantic.Field(..., description="Title of the context document")
-    s3_key: str | None = pydantic.Field(
-        None, description="S3 object key for the uploaded content"
-    )
-    s3_bucket: str = pydantic.Field(..., description="S3 bucket containing the file")
-    checksum_sha256: str | None = pydantic.Field(
-        None, description="SHA256 checksum of the file"
-    )
-    status: str = pydantic.Field(
-        default="uploaded", description="Status of the context document"
-    )
     created_at: datetime = pydantic.Field(
         ..., description="When the context was created"
+    )
+    description: str | None = pydantic.Field(
+        default=None, description="Description of the context"
     )

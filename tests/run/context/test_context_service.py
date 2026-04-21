@@ -7,7 +7,8 @@ from pytest_mock import MockerFixture
 
 from app.run import models as run_models
 from app.run import repository
-from app.run.context import api_schemas, models, service
+from app.run.context import api_schemas, service
+from app.run.context import models as context_models
 
 
 class TestContextService:
@@ -74,20 +75,23 @@ class TestContextService:
         # Assert
         assert result.upload_id == "uploader-id-123"
 
-        # Verify repository.append_context was called
-        mock_repository.append_context.assert_called_once()
-        call_args = mock_repository.append_context.call_args
+        # Verify repository.update_run was called
+        mock_repository.update_run.assert_called_once()
+        call_args = mock_repository.update_run.call_args
         assert call_args[0][0] == "run-123"  # run_id
 
-        pending_context = call_args[0][1]  # context argument
+        updated_run = call_args[0][1]  # run argument
+        assert len(updated_run.contexts) == 1
+        pending_context = updated_run.contexts[0]
         assert pending_context.title == "test.txt"
-        assert pending_context.filename is None
-        assert pending_context.filename is None
         assert pending_context.description == "Test description"
-        assert pending_context.status == "pending"
-        assert pending_context.s3_bucket == "ai-uc-content-swarm-context"
-        assert pending_context.s3_key is None
-        assert pending_context.checksum_sha256 is None
+        assert pending_context.cdp_uploader is not None
+        assert pending_context.cdp_uploader.status == "pending"
+        assert pending_context.cdp_uploader.s3_bucket == "ai-uc-content-swarm-context"
+        assert pending_context.cdp_uploader.upload_id == "uploader-id-123"
+        assert pending_context.cdp_uploader.s3_key is None
+        assert pending_context.cdp_uploader.checksum_sha256 is None
+        assert pending_context.cdp_uploader.filename is None
 
     @pytest.mark.asyncio
     async def test_initiate_upload_includes_context_id_in_callback_url(
@@ -150,7 +154,7 @@ class TestContextService:
         with pytest.raises(run_models.RunNotFoundError):
             await context_service.initiate_upload("nonexistent-run", request)
 
-        mock_repository.append_context.assert_not_called()
+        mock_repository.update_run.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_handle_upload_callback_with_context_id_updates_pending(
@@ -163,16 +167,18 @@ class TestContextService:
         now = datetime.now(tz=UTC)
         context_id = uuid.uuid4()
 
-        pending_context = models.ContextMetadata(
+        cdp_uploader = context_models.CdpUploaderMetadata(
+            s3_bucket="test-bucket",
+            upload_id="upload-123",
+            status="pending",
+        )
+
+        pending_context = context_models.ContextMetadata(
             id=context_id,
             title="test.txt",
-            s3_bucket="test-bucket",
-            s3_key=None,
-            checksum_sha256=None,
-            filename=None,
-            status="pending",
             created_at=now,
             description="Test description",
+            cdp_uploader=cdp_uploader,
         )
 
         run = run_models.Run(
@@ -208,16 +214,20 @@ class TestContextService:
         )
 
         # Assert
-        mock_repository.append_context.assert_called_once()
-        call_args = mock_repository.append_context.call_args
+        mock_repository.update_run.assert_called_once()
+        call_args = mock_repository.update_run.call_args
+        assert call_args[0][0] == "run-123"  # run_id
 
-        updated_context = call_args[0][1]
+        updated_run = call_args[0][1]  # run argument
+        updated_context = updated_run.get_context(context_id)
+        assert updated_context is not None
         assert updated_context.id == context_id
-        assert updated_context.filename == "test.txt"
-        assert updated_context.s3_key == "s3/path/to/file"
-        assert updated_context.s3_bucket == "s3-bucket"
-        assert updated_context.checksum_sha256 == "abc123def456"
-        assert updated_context.status == "uploaded"
+        assert updated_context.cdp_uploader is not None
+        assert updated_context.cdp_uploader.filename == "test.txt"
+        assert updated_context.cdp_uploader.s3_key == "s3/path/to/file"
+        assert updated_context.cdp_uploader.s3_bucket == "s3-bucket"
+        assert updated_context.cdp_uploader.checksum_sha256 == "abc123def456"
+        assert updated_context.cdp_uploader.status == "uploaded"
         assert updated_context.description == "Test description"
 
     @pytest.mark.asyncio
@@ -250,14 +260,17 @@ class TestContextService:
         now = datetime.now(tz=UTC)
         context_id = uuid.uuid4()
 
-        pending_context = models.ContextMetadata(
+        cdp_uploader = context_models.CdpUploaderMetadata(
+            s3_bucket="test-bucket",
+            upload_id="upload-123",
+            status="pending",
+        )
+
+        pending_context = context_models.ContextMetadata(
             id=context_id,
             title="test.txt",
-            s3_bucket="test-bucket",
-            s3_key=None,
-            checksum_sha256=None,
-            status="pending",
             created_at=now,
+            cdp_uploader=cdp_uploader,
         )
 
         run = run_models.Run(
@@ -303,4 +316,4 @@ class TestContextService:
         )
 
         # Assert - should only update once (process first file and return)
-        mock_repository.append_context.assert_called_once()
+        mock_repository.update_run.assert_called_once()

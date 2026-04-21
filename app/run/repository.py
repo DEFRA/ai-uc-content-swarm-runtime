@@ -1,14 +1,15 @@
+import logging
 import uuid
 from abc import ABC, abstractmethod
-from logging import getLogger
+from datetime import UTC, datetime
 
 import bson
 import pymongo.asynchronous.database
 
 import app.run.models as models
-from app.run.context.models import ContextMetadata
+from app.run.context import models as context_models
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class RunRepository(ABC):
@@ -37,35 +38,16 @@ class RunRepository(ABC):
         """
 
     @abstractmethod
-    async def append_context(
-        self, run_id: str, context: ContextMetadata | list[ContextMetadata]
-    ) -> None:
-        """Append one or more context documents to a run.
+    async def update_run(self, run_id: str, run: models.Run) -> None:
+        """Update a run with new state.
 
-        For each provided context: if a context with the same id exists in the run,
-        it is updated; otherwise it is appended.
-
-        Args:
-            run_id: The ID of the run.
-            context: A ContextMetadata or list of ContextMetadata to append/upsert.
-        """
-
-    @abstractmethod
-    async def update_status(self, run_id: str, status: models.RunStatus) -> None:
-        """Update the status of a run.
+        Updates the status, result, and/or contexts. For each context in the run,
+        if a context with the same id exists in the database, it is updated;
+        otherwise it is appended.
 
         Args:
             run_id: The ID of the run.
-            status: The new RunStatus value.
-        """
-
-    @abstractmethod
-    async def update_run_result(self, run_id: str, result: str) -> None:
-        """Update the result and status of a run.
-
-        Args:
-            run_id: The ID of the run.
-            result: The result output to store.
+            run: The Run domain model with updated state.
         """
 
 
@@ -127,54 +109,75 @@ class MongoRunRepository(RunRepository):
         for ctx_doc in doc.get("contexts", []):
             ctx_id: uuid.UUID = ctx_doc["id"]
 
-            context = ContextMetadata(
+            cdp_uploader = None
+            if "cdpUploader" in ctx_doc:
+                cdp_doc = ctx_doc["cdpUploader"]
+                cdp_uploader = context_models.CdpUploaderMetadata(
+                    s3_bucket=cdp_doc["s3Bucket"],
+                    upload_id=cdp_doc.get("uploadId"),
+                    s3_key=cdp_doc.get("s3Key"),
+                    checksum_sha256=cdp_doc.get("checksumSha256"),
+                    filename=cdp_doc.get("filename"),
+                    status=cdp_doc.get("status", "pending"),
+                )
+
+            context = context_models.ContextMetadata(
                 id=ctx_id,
                 title=ctx_doc["title"],
-                s3_bucket=ctx_doc["s3_bucket"],
-                s3_key=ctx_doc.get("s3_key"),
-                checksum_sha256=ctx_doc.get("checksum_sha256"),
-                filename=ctx_doc.get("filename"),
-                status=ctx_doc.get("status", "uploaded"),
                 created_at=ctx_doc["created_at"],
                 description=ctx_doc.get("description"),
+                cdp_uploader=cdp_uploader,
             )
 
             run.add_context(context)
 
         return run
 
-    async def append_context(
-        self, run_id: str, context: ContextMetadata | list[ContextMetadata]
-    ) -> None:
-        """Append one or more context documents to a run.
+    async def update_run(self, run_id: str, run: models.Run) -> None:
+        """Update a run with new state.
 
-        For each provided context: if a context with the same id exists in the run,
-        it is updated; otherwise it is appended.
+        Updates the status, result, and/or contexts. For each context in the run,
+        if a context with the same id exists in the database, it is updated;
+        otherwise it is appended.
 
         Args:
             run_id: The ID of the run.
-            context: A ContextMetadata or list of ContextMetadata to append/upsert.
+            run: The Run domain model with updated state.
         """
         oid = bson.ObjectId(run_id)
 
-        contexts = [context] if isinstance(context, ContextMetadata) else context
+        update_doc = {
+            "status": run.status.value,
+            "updated_at": datetime.now(tz=UTC),
+        }
 
-        for ctx in contexts:
-            context_doc = {
+        if run.result is not None:
+            update_doc["result"] = run.result
+
+        await self.collection.update_one(
+            {"_id": oid},
+            {"$set": update_doc},
+        )
+
+        for ctx in run.contexts:
+            context_doc: dict = {
                 "id": ctx.id,
                 "title": ctx.title,
-                "s3_key": ctx.s3_key,
-                "s3_bucket": ctx.s3_bucket,
-                "checksum_sha256": ctx.checksum_sha256,
-                "status": ctx.status,
                 "created_at": ctx.created_at,
             }
 
-            if ctx.filename is not None:
-                context_doc["filename"] = ctx.filename
-
             if ctx.description is not None:
                 context_doc["description"] = ctx.description
+
+            if ctx.cdp_uploader is not None:
+                context_doc["cdpUploader"] = {
+                    "s3Bucket": ctx.cdp_uploader.s3_bucket,
+                    "uploadId": ctx.cdp_uploader.upload_id,
+                    "s3Key": ctx.cdp_uploader.s3_key,
+                    "checksumSha256": ctx.cdp_uploader.checksum_sha256,
+                    "filename": ctx.cdp_uploader.filename,
+                    "status": ctx.cdp_uploader.status,
+                }
 
             result = await self.collection.update_one(
                 {"_id": oid, "contexts.id": ctx.id},
@@ -186,46 +189,3 @@ class MongoRunRepository(RunRepository):
                     {"_id": oid},
                     {"$push": {"contexts": context_doc}},
                 )
-
-    async def update_status(self, run_id: str, status: models.RunStatus) -> None:
-        """Update the status of a run.
-
-        Args:
-            run_id: The ID of the run.
-            status: The new RunStatus value.
-        """
-        from datetime import UTC, datetime
-
-        oid = bson.ObjectId(run_id)
-
-        await self.collection.update_one(
-            {"_id": oid},
-            {
-                "$set": {
-                    "status": status.value,
-                    "updated_at": datetime.now(tz=UTC),
-                }
-            },
-        )
-
-    async def update_run_result(self, run_id: str, result: str) -> None:
-        """Update the result and status of a run.
-
-        Args:
-            run_id: The ID of the run.
-            result: The result output to store.
-        """
-        from datetime import UTC, datetime
-
-        oid = bson.ObjectId(run_id)
-
-        await self.collection.update_one(
-            {"_id": oid},
-            {
-                "$set": {
-                    "result": result,
-                    "status": models.RunStatus.COMPLETED.value,
-                    "updated_at": datetime.now(tz=UTC),
-                }
-            },
-        )

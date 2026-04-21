@@ -68,7 +68,7 @@ class RunService:
                 "id": str(ctx.id),
                 "name": ctx.title,
                 "description": ctx.title,
-                "path": ctx.s3_key,
+                "path": ctx.cdp_uploader.s3_key if ctx.cdp_uploader else None,
             }
             for ctx in run.contexts
         ]
@@ -109,7 +109,7 @@ class RunService:
         run.status = status
         run.updated_at = datetime.now(tz=UTC)
 
-        await self.repository.update_status(run.id, status)
+        await self.repository.update_run(run.id, run)
 
         logger.info("Updated run %s status to %s", run.id, status.value)
 
@@ -138,11 +138,23 @@ class RunService:
         run.status = models.RunStatus.COMPLETED
         run.updated_at = datetime.now(tz=UTC)
 
-        await self.repository.update_run_result(run.id, result)
+        await self.repository.update_run(run.id, run)
 
         logger.info("Stored result for run %s", run.id)
 
         return run
+
+    async def get_status(self, run_id: str) -> models.RunStatus | None:
+        """Retrieve the current status of a run.
+
+        Args:
+            run_id: The ID of the run to retrieve.
+
+        Returns:
+            The current RunStatus, or None if the run does not exist.
+        """
+        run = await self.repository.get_run(run_id)
+        return run.status if run else None
 
     async def get_run(self, run_id: str) -> models.Run | None:
         """Retrieve a run by its ID.
