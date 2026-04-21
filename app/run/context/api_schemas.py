@@ -61,7 +61,8 @@ class CdpUploaderResponse(pydantic.BaseModel):
     )
 
     status: str = pydantic.Field(
-        default="pending", description="Current upload status (pending, completed, failed, etc.)"
+        default="pending",
+        description="Current upload status (pending, completed, failed, etc.)",
     )
     upload_id: str | None = pydantic.Field(
         default=None, description="Unique identifier for the upload session"
