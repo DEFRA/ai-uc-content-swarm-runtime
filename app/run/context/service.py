@@ -114,10 +114,8 @@ class ContextService:
         pending_context = run.get_context(context_id)
 
         if pending_context and pending_context.cdp_uploader:
-            # Return as soon as first file upload detail is processed
             for form_value in payload.form.values():
                 if isinstance(form_value, api_schemas.FileUploadDetail):
-                    # Update the CDP uploader metadata with callback results
                     updated_cdp_uploader = context_models.CdpUploaderMetadata(
                         s3_bucket=form_value.s3_bucket,
                         upload_id=pending_context.cdp_uploader.upload_id,

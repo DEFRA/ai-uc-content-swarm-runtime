@@ -93,4 +93,5 @@ ignore_errors = true
 exclude-newer = "5 days"
 override-dependencies = [
     "aiohttp==3.13.4",
+    "authlib==1.6.11",
 ]
